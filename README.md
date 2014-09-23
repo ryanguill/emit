@@ -9,6 +9,8 @@ in some ways from its api.  It also seeks to privide an easy way to create async
 Note: this project is just getting started.  Documentation and tests will be sparse for the time being.  Pull requests 
 for code, documentation or tests welcome!
 
+I aim to support railo 4+ first, and ACF 10+ secondarily.  You could probably back-port this project to tag based to as far as CF 8 - this is left as an exercise for the cursed.  I am not interested in tag based pull requests for this project.
+
 ##Quick Start Guide:
 
 Extend emit.cfc with any cfc you want.  There is no constructor so no need to call an init method.  Or, if you just need an application wide event manager, just instantiate emit.cfc directly.
@@ -103,7 +105,7 @@ Alias for emit().
 dispatchError ()
 ```
 
-Convenience function for dispatching an event on "error".  By default, any exceptions in the calling of the listener will redispatch to "error", with an added argument of _exception_.  If no listeners exist for the "error" event, the exception is thrown.  
+Convenience function for dispatching an event on "error".  By default, any exceptions in the calling of the listener will redispatch to "error", with an added argument of *exception*.  If no listeners exist for the "error" event, the exception is thrown.  
 
 
 Other Methods:
@@ -132,3 +134,23 @@ setCaseSensitiveEventName (required boolean value)
 ```
 
 see isCaseSensitiveEventName().
+
+
+##License
+
+_Apache 2.0_
+
+Copyright 2014 Ryan Guill
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
