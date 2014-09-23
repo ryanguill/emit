@@ -4,11 +4,11 @@ emit
 #CFML Event Emitter
 
 The primary goal of this project is to be similar to the event emitter in node.js, although this project might deviate
-in some ways from its api.  It also seeks to privide an easy way to create async code in cfml.  Any event listener can be created as async.
+in some ways from its api.  It also seeks to provide an easy way to create async code in CFML.  Any event listener can be created as async.
 
 > Note! this project is just getting started.  Documentation and tests will be sparse for the time being.  Pull requests or issues for code, documentation or tests welcome!
 
-I aim to support railo 4+ first, and ACF 10+ secondarily.  You could probably back-port this project to tag based to as far as CF 8 - this is left as an exercise for the cursed.  I am not interested in tag based pull requests for this project.
+I aim to support Railo 4+ first, and ACF 10+ secondarily.  You could probably back-port this project to tag based to as far as CF 8 - this is left as an exercise for the cursed.  I am not interested in tag based pull requests for this project.
 
 ##Quick Start Guide:
 
@@ -49,7 +49,7 @@ addEventListener (required string event, required any listener, boolean async = 
 ```
 Creates an event listener for a particular event emitted by the instance that you are calling addEventListener on.  Event is case sensitive by default.  Listener can be any custom function.  Async defaults to false.  If you use async true, the listener will be executed in a separate thread.  Keep the following in mind:
 
-- You will not be guarenteed that it will run at any particular time or order.
+- You will not be guaranteed that it will run at any particular time or order.
 - You will not be able to send data into the output buffer.  This makes debugging difficult - use logging or write out files.
 - You will have access to the data that you close over inside of your listener.  Make sure you have everything you need.
 
@@ -99,6 +99,18 @@ dispatch (required string event, [other arguments])
 ```
 
 Alias for emit().
+
+```
+async (required any f)
+```
+
+Convenience method.  Give it a function, it will run it in a separate thread.
+
+```
+pipeline(event)
+```
+
+Not Yet Documented
 
 ```
 dispatchError ()

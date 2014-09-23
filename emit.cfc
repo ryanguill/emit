@@ -150,31 +150,30 @@ component {
 		structDelete(arguments, "event");
 
 		for (var listener in listeners) {
-			if (listener.async) {
-				thread action="run" name="thread_#createUUID()#" listener=listener args=arguments emit=this {
-					try {
-						listener.listener(argumentCollection=args);
-					} catch (any e) {
-						args.exception = e;
-						emit.dispatchError(argumentCollection=args);
-					} finally {
-						if (listener.once) {
-							emit.removeListener(localEvent, listener.listener);
-						}
-					}
-				}
+
+			if (isStruct(listener.listener)) {
+				//this is a pipeline
+				listener.listener.run(argumentCollection=arguments);
 			} else {
-				try {
-					listener.listener(argumentCollection=arguments);
-				} catch (any e) {
-					arguments.exception = e;
-					dispatchError(argumentCollection=arguments);
-				} finally {
-					if (listener.once) {
-						removeListener(localEvent, listener.listener);
+				//this is a regular listener
+				if (listener.async) {
+					arguments.f = listener.listener;
+					async(argumentCollection=arguments);
+					
+				} else {
+					try {
+						listener.listener(argumentCollection=arguments);
+					} catch (any e) {
+						arguments.exception = e;
+						dispatchError(argumentCollection=arguments);
 					}
 				}
 			}
+
+			if (listener.once) {
+				emit.removeListener(localEvent, listener.listener);
+			}
+
 		}
 
 		return true;
@@ -183,6 +182,60 @@ component {
 	function dispatch (required string event) {
 		return emit(argumentCollection=arguments);
 	}
+
+	function async (required any f) {
+		var listener = f;
+		structDelete(arguments, "f");
+
+		thread action="run" name="thread_#createUUID()#" listener=listener args=arguments emit=this {
+			try {
+				listener(argumentCollection=arguments);
+			} catch (any e) {
+				arguments.exception = e;
+				emit.dispatchError(argumentCollection=arguments);
+			}
+		}
+
+		//writedump("done");
+	}
+
+	function pipeline (required string event, boolean async = false, boolean once = false) {
+		var q = [];
+		var isComplete = false;
+
+		var callAsync = variables.async;
+		
+		var o = {
+			then = function(required any f) {
+				arrayAppend(q, f);
+				return o;
+			},
+			complete = function() {
+				isComplete = true;
+				addEventListener(event, o, async, once);
+				return o;
+			},
+			run = function() {
+				if (!isComplete) {
+					throw(type="Emit.pipelineNotComplete", message="You must call complete() on the pipeline when you are done adding listeners");
+				}
+				var args = arguments;
+				for (var f in q) {
+					if (async) {
+						callAsync(function() {
+							f(argumentCollection=args);
+						});
+					} else {
+						f(argumentCollection=args);
+					}
+				}
+			}
+		};
+
+		return o;
+	}
+
+
 
 	function dispatchError () {
 		if (structKeyExists(_emit.listeners, "error") && arrayLen(_emit.listeners["error"])) {
