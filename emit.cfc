@@ -185,8 +185,8 @@ component {
 	}
 
 	function dispatchError () {
-		if (structKeyExists(_emit.listeners, "ERROR") && arrayLen(_emit.listeners["ERROR"])) {
-			arguments.event = "ERROR";
+		if (structKeyExists(_emit.listeners, "error") && arrayLen(_emit.listeners["error"])) {
+			arguments.event = "error";
 			return emit(argumentCollection=arguments);
 		}
 
