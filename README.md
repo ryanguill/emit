@@ -1,0 +1,4 @@
+emit
+====
+
+coldfusion event emitter
