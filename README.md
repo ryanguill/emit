@@ -89,13 +89,13 @@ listeners (required string event)
 Gets an array of all of the listeners.  Each item in the array is a structure with the keys: listner (function), async (boolean), and once (boolean);
 
 ```
-emit(required string event)
+emit(required string event, [other arguments])
 ```
 
-Fires an event of the given type.  Remember that events are case sensitive by default.
+Fires an event of the given type.  Remember that events are case sensitive by default.  Event name is the only required argument, you can pass whatever other data you want into emit (or dispatch) and it will be passed along to the listner.
 
 ```
-dispatch (required string event)
+dispatch (required string event, [other arguments])
 ```
 
 Alias for emit().
