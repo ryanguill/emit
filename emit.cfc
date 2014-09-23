@@ -74,6 +74,8 @@ component {
 
 		arrayAppend(_emit.listeners[event], {listener=listener, async=async, once=once});
 
+		emit("newListener", listener);
+
 		return this;
 	}
 
@@ -97,6 +99,7 @@ component {
 			for (var i = 1; i <= arrayLen(listeners); i++) {
 				if (listener.equals(listeners[i].listener)) {
 					arrayDeleteAt(listeners, i);
+					emit("removeListener", listener.listener);
 					break;
 				}
 			}
