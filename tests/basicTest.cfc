@@ -2,9 +2,18 @@ component extends="testbox.system.BaseSpec" {
 
 	function beforeTests() {
 		//create a folder for the test files to be written to
-		variables.dir = getTempDirectory() & "/emitBasicTest" & dateFormat(now(),"yyyymmdd") & timeformat(now(),"HHmmssl");
+		var tempDir = getTempDirectory();
+		if (!findNoCase(right(tempDir, 1), "/\")) {
+			tempDir &= "/";
+		}
+
+		variables.dir = tempDir & "emitBasicTest" & dateFormat(now(),"yyyymmdd") & timeformat(now(),"HHmmssl");
 
 		directoryCreate(dir);
+
+		writeoutput(dir & "<hr>");
+
+
 	}
 
 	function afterTests() {
@@ -126,7 +135,7 @@ component extends="testbox.system.BaseSpec" {
 
 		assert(local.outputData == repeatString("testAddEventListenerSyncSuccess", 2));
 
-		assert(arrayLen(testService.listeners("testAddEventListenerSync")) == 0)
+		assert(arrayLen(testService.listeners("testAddEventListenerSync")) == 0);
 
 	}
 
@@ -145,7 +154,7 @@ component extends="testbox.system.BaseSpec" {
 
 		assert(local.outputData == repeatString("testManySyncSuccess", 2));
 
-		assert(arrayLen(testService.listeners("testManySync")) == 0)
+		assert(arrayLen(testService.listeners("testManySync")) == 0);
 
 		$assert.throws(
 			function() {
@@ -193,7 +202,7 @@ component extends="testbox.system.BaseSpec" {
 
 		$assert.throws(function () {
 			testService.addEventListener("testMaxListenersEvent", function(){});
-		}, "Emit.maxListenersExceeded")
+		}, "Emit.maxListenersExceeded");
 
 		$assert.throws(function () {
 			testService.setMaxListeners(0);
@@ -300,7 +309,7 @@ component extends="testbox.system.BaseSpec" {
 			writeOutput("removeListenerFired");
 		});
 
-		var handler = function () {}
+		var handler = function () {};
 
 		testService.on("SomeEvent", handler);
 
@@ -348,7 +357,7 @@ component extends="testbox.system.BaseSpec" {
 			writeOutput("removeListenerFired");
 		});
 
-		var handler = function () {}
+		var handler = function () {};
 
 		testService.on("SomeEvent", handler);
 
@@ -387,21 +396,6 @@ component extends="testbox.system.BaseSpec" {
 
 	}
 
-	function testDispatch () {
-		var testService = new com.testService();
-
-		testService.on("testDispatch", function() {
-			writeoutput("testDispatchSuccess");
-		});
-
-		savecontent variable="local.outputData" {
-			testService.dispatch("testDispatch");
-		}
-
-		assert(local.outputData == "testDispatchSuccess");
-
-	}
-
 	function testError () {
 
 		var testService = new com.testService();
@@ -426,7 +420,7 @@ component extends="testbox.system.BaseSpec" {
 
 		$assert.throws(function() {
 			testService.emit("testErrorEvent");
-		}, "expression");
+		});
 
 	}
 
@@ -494,57 +488,11 @@ component extends="testbox.system.BaseSpec" {
 
 	}
 
-	function testPipelineEventAsync () {
-
-		var testService = new com.testService();
-
-		var test = [];
-
-		var filename = expandPath(dir) & "/testPipelineEventAsync.txt";
-
-		var p = testService.pipeline().add(
-			function() {
-				arrayAppend(test, 1);
-			}
-		).add(
-			function() {
-				arrayAppend(test, 2);
-			}
-		).add(
-			function() {
-				arrayAppend(test, 3);
-			}
-		).add(
-			function() {
-				arrayAppend(test, 4);
-			}
-		).add(
-			function() {
-				filewrite(filename, arrayToList(test));
-			}
-		).complete();
-
-		testService.on("testPipelineEventAsync", p, true);
-
-		testService.emit("testPipelineEventAsync");
-
-		sleep(10);
-
-		assert(fileExists(filename));
-
-		var filecontents = fileRead(filename);
-
-		assert(filecontents == "1,2,3,4", filecontents);
-
-	}
-
 	function testMutatingState () {
 
-		/*
-			the scenario here is that you are inside of a service and you want to
-			provide a way for users outside of the service to extend or intercept
-			some functionality.
-		*/
+		//the scenario here is that you are inside of a service and you want to
+		//provide a way for users outside of the service to extend or intercept
+		//some functionality.
 
 		var testService = new com.testService();
 
@@ -558,10 +506,39 @@ component extends="testbox.system.BaseSpec" {
 
 		assert(structKeyExists(outputData, "foo"));
 		assert(outputData.foo == "bar");
+
 		assert(structKeyExists(outputData, "newKey"));
 		assert(outputData.newKey == "newValue");
 
 	}
+
+
+	function testPositionalArgs () {
+
+		//the scenario here is that you are inside of a service and you want to
+		//provide a way for users outside of the service to extend or intercept
+		//some functionality.
+
+		var testService = new com.testService();
+
+		var inputData = {foo = "bar"};
+
+		testService.on("extensionPointEvent", function(data) {
+			data.newKey = "newValue";
+			writedump(arguments);
+			abort;
+		});
+
+		var outputData = testService.extensionPointPositional(inputData);
+
+		assert(structKeyExists(outputData, "foo"));
+		assert(outputData.foo == "bar");
+
+		assert(structKeyExists(outputData, "newKey"));
+		assert(outputData.newKey == "newValue");
+
+	}
+
 
 	function testEmit () {
 		var testService = new com.testService();
@@ -619,10 +596,9 @@ component extends="testbox.system.BaseSpec" {
 
 	function testComposingServices () {
 
-		/*
-			the scenario here is that you want to wire multiple services together to
-			act on a struct of data.
-		*/
+		//the scenario here is that you want to wire multiple services together to
+		//act on a struct of data.
+
 		var testService = new com.testService();
 		var formatterService = new com.formatterService();
 
@@ -630,7 +606,7 @@ component extends="testbox.system.BaseSpec" {
 
 		var inputData = {firstname="Ryan", lastname="Guill"};
 
-		testService.emit("testCompose", inputData);
+		testService.emit(eventName="testCompose", data=inputData);
 
 		assert(structKeyExists(inputData, "fullname"));
 		assert(inputData.fullname == "Guill, Ryan");
@@ -641,7 +617,7 @@ component extends="testbox.system.BaseSpec" {
 
 		var testService = new com.testService();
 
-		var filename = expandPath(dir) & "/testAsync.txt";
+		var filename = dir & "/testAsync.txt";
 
 		testService.async(function () {
 			filewrite(filename, "");
@@ -657,13 +633,13 @@ component extends="testbox.system.BaseSpec" {
 
 		var testService = new com.testService();
 
-		var filename = expandPath(dir) & "/testOnAsync.txt";
+		var filename = dir & "/testOnAsync.txt";
 
 		var x = randRange(0,1000);
 
 		testService.on("testOnAsync", function () {
 			filewrite(filename, x);
-		}, true);
+		});
 
 
 		testService.emit("testOnAsync");
@@ -678,6 +654,51 @@ component extends="testbox.system.BaseSpec" {
 		assert(filecontents == x);
 
 	}
+
+	function testPipelineEventAsync () {
+
+		var testService = new com.testService();
+
+		var test = [];
+
+		var filename = dir & "/testPipelineEventAsync.txt";
+
+		var p = testService.pipeline().add(
+			function() {
+				arrayAppend(test, 1);
+			}
+		).add(
+			function() {
+				arrayAppend(test, 2);
+			}
+		).add(
+			function() {
+				arrayAppend(test, 3);
+			}
+		).add(
+			function() {
+				arrayAppend(test, 4);
+			}
+		).add(
+			function() {
+				filewrite(filename, arrayToList(test));
+			}
+		).complete();
+
+		testService.on("testPipelineEventAsync", p, true);
+
+		testService.emit("testPipelineEventAsync");
+
+		sleep(10);
+
+		assert(fileExists(filename));
+
+		var filecontents = fileRead(filename);
+
+		assert(filecontents == "1,2,3,4", filecontents);
+
+	}
+
 
 }
 

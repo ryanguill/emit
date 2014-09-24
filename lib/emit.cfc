@@ -97,7 +97,7 @@ component {
 		addEventListener(eventName, listener, async, 1);
 	}
 
-	function many (required string eventName, required any listener, required numeric timesToListen, boolean async = false, ) {
+	function many (required string eventName, required any listener, required numeric timesToListen, boolean async = false ) {
 		_ensurePrivateVariables();
 		if (int(timesToListen) != timesToListen || timesToListen < 1) {
 			throw(type="Emit.InvalidTimesToListen", message="timesToListen must be a positive integer");
@@ -111,18 +111,19 @@ component {
 		eventName = _normalizeEventName(eventName);
 
 		if (structKeyExists(_emit.listeners, eventName)){
-			var listeners = _emit.listeners[eventName];
 
-			for (var i = 1; i <= arrayLen(listeners); i++) {
-				if (listener.equals(listeners[i].listener)) {
-					emit("removeListener", listeners[i].listener);
-					arrayDeleteAt(listeners, i);
-					break;
+			for (var i = 1; i <= arrayLen(_emit.listeners[eventName]); i++) {
+				if (listener.equals(_emit.listeners[eventName][i].listener)) {
+					emit("removeListener", _emit.listeners[eventName][i].listener);
+					arrayDeleteAt(_emit.listeners[eventName], i);
+
+					return true;
 				}
 			}
+
 		}
 
-		return this;
+		return false;
 	}
 
 	function off (required string eventName, required any listener) {
@@ -135,8 +136,14 @@ component {
 		eventName = _normalizeEventName(eventName);
 
 		if (structKeyExists(_emit.listeners, eventName)){
-			while (arrayLen(_emit.listeners[eventName])) {
+			var len = arrayLen(_emit.listeners[eventName]);
+			var count = 0;
+			while (arrayLen(_emit.listeners[eventName]) > 0) {
 				removeListener(eventName, _emit.listeners[eventName][1].listener);
+				if (++count > len) {
+					//just to protect against an endless loop
+					abort;
+				}
 			}
 		}
 
