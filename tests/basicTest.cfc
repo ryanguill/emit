@@ -296,6 +296,30 @@ component extends="testbox.system.BaseSpec" {
 
 	}
 
+	function testOff () {
+		var testService = new com.testService();
+
+		testService.on("removeListener", function() {
+			writeOutput("removeListenerFired");
+		});
+
+		var handler = function () {}
+
+		testService.on("SomeEvent", handler);
+
+		savecontent variable="local.output1" {
+			testService.off("SomeEvent", handler);
+		}
+
+		assert(local.output1 == "removeListenerFired");
+
+		savecontent variable="local.output2" {
+			testService.off("SomeEvent", handler);
+		}
+
+		assert(local.output2 == "");
+	}
+
 	function testListeners () {
 		var testService = new com.testService();
 

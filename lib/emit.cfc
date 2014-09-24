@@ -111,6 +111,10 @@ component {
 		return this;
 	}
 
+	function off (required string event, required any listener) {
+		removeListener(argumentCollection=arguments);
+	}
+
 	function removeAllListeners (required string event) {
 		_ensurePrivateVariables();
 
