@@ -148,7 +148,15 @@ component extends="testbox.system.BaseSpec" {
 
 		$assert.throws(function () {
 			testService.addEventListener("testMaxListenersEvent", function(){});
-		}, "Emit.maxListenersExceeded");
+		}, "Emit.maxListenersExceeded")
+
+		$assert.throws(function () {
+			testService.setMaxListeners(0);
+		}, "Emit.InvalidMaxListeners");
+
+		$assert.throws(function () {
+			testService.setMaxListeners(1.5);
+		}, "Emit.InvalidMaxListeners");
 
 	}
 

@@ -41,6 +41,9 @@ component {
 
 	function setMaxListeners (required numeric n) {
 		_ensurePrivateVariables();
+		if (int(n) != n || n < 1) {
+			throw(type="Emit.InvalidMaxListeners", message="setMaxListeners(n) - n must be a positive integer");
+		}
 		_emit.maxListeners = n;
 	}
 
