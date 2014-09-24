@@ -232,8 +232,6 @@ component {
 				emit.dispatchError(argumentCollection=arguments);
 			}
 		}
-
-		//writedump("done");
 	}
 
 	private boolean function _isPipeline (required any listener) {
