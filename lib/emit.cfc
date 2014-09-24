@@ -42,7 +42,7 @@ component {
 	function setMaxListeners (required numeric n) {
 		_ensurePrivateVariables();
 		if (int(n) != n || n < 1) {
-			throw(type="Emit.InvalidMaxListeners", message="setMaxListeners(n) - n must be a positive integer");
+			throw(type="Emit.InvalidMaxListeners", message="maxListeners must be a positive integer");
 		}
 		_emit.maxListeners = n;
 	}
@@ -62,7 +62,7 @@ component {
 		return _emit.caseSensitiveEventName;
 	}
 
-	function addEventListener (required string eventName, required any listener, boolean async = false, boolean once = false) {
+	function addEventListener (required string eventName, required any listener, boolean async = false, numeric timesToListen = -1) {
 		_ensurePrivateVariables();
 
 		eventName = _normalizeEventName(eventName);
@@ -75,7 +75,7 @@ component {
 			throw(type="Emit.maxListenersExceeded", message="Max Listeners exceeded for eventName: " & eventName, detail="Current Max Listeners value: " & getMaxListeners());
 		}
 
-		arrayAppend(_emit.listeners[eventName], {listener=listener, async=async, once=once});
+		arrayAppend(_emit.listeners[eventName], {listener=listener, async=async, timesToListen=timesToListen});
 
 		emit("newListener", listener);
 
@@ -88,7 +88,15 @@ component {
 
 	function once (required string eventName, required any listener, boolean async = false) {
 		_ensurePrivateVariables();
-		addEventListener(eventName, listener, async, true);
+		addEventListener(eventName, listener, async, 1);
+	}
+
+	function many (required string eventName, required any listener, required numeric timesToListen, boolean async = false, ) {
+		_ensurePrivateVariables();
+		if (int(timesToListen) != timesToListen || timesToListen < 1) {
+			throw(type="Emit.InvalidTimesToListen", message="timesToListen must be a positive integer");
+		}
+		addEventListener(eventName, listener, async, timesToListen);
 	}
 
 	function removeListener (required string eventName, required any listener) {
@@ -186,10 +194,12 @@ component {
 				}
 			}
 
-			if (listener.once) {
-				removeListener(localEventName, listener.listener);
+			if (listener.timesToListen != -1) {
+				listener.timesToListen--;
+				if (listener.timesToListen < 1) {
+					removeListener(localEventName, listener.listener);
+				}
 			}
-
 		}
 
 		return true;
@@ -228,7 +238,8 @@ component {
 			},
 			complete = function() {
 				isComplete = true;
-				addEventListener(eventName, o, async, once);
+				timesToListen = once ? 1 : 0;
+				addEventListener(eventName, o, async, timesToListen);
 				return o;
 			},
 			run = function() {

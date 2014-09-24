@@ -114,6 +114,53 @@ component extends="testbox.system.BaseSpec" {
 
 		assert(arrayLen(testService.listeners("testOnceSync")) == 0);
 
+		testService.addEventListener("testAddEventListenerSync", function() {
+			writeoutput("testAddEventListenerSyncSuccess");
+		}, false, 2);
+
+		savecontent variable="local.outputData" {
+			testService.emit("testAddEventListenerSync");
+			testService.emit("testAddEventListenerSync");
+			testService.emit("testAddEventListenerSync");
+		}
+
+		assert(local.outputData == repeatString("testAddEventListenerSyncSuccess", 2));
+
+		assert(arrayLen(testService.listeners("testAddEventListenerSync")) == 0)
+
+	}
+
+	function testManySync () {
+		var testService = new com.testService();
+
+		testService.many("testManySync", function() {
+			writeoutput("testManySyncSuccess");
+		}, 2);
+
+		savecontent variable="local.outputData" {
+			testService.emit("testManySync");
+			testService.emit("testManySync");
+			testService.emit("testManySync");
+		}
+
+		assert(local.outputData == repeatString("testManySyncSuccess", 2));
+
+		assert(arrayLen(testService.listeners("testManySync")) == 0)
+
+		$assert.throws(
+			function() {
+				testService.many("SomeEvent", function(){}, 0);
+			}, "Emit.InvalidTimesToListen");
+
+		$assert.throws(
+			function() {
+				testService.many("SomeEvent", function(){}, 1.5);
+			}, "Emit.InvalidTimesToListen");
+
+		$assert.throws(
+			function() {
+				testService.many("SomeEvent", function(){}, -2);
+			}, "Emit.InvalidTimesToListen");
 	}
 
 	function testMaxListeners () {
