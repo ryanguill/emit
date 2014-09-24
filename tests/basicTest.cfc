@@ -436,7 +436,7 @@ component extends="testbox.system.BaseSpec" {
 
 		var test = [];
 
-		testService.pipeline("testPipeline").add(
+		var p = testService.pipeline().add(
 			function() {
 				arrayAppend(test, 1);
 			}
@@ -453,6 +453,8 @@ component extends="testbox.system.BaseSpec" {
 				arrayAppend(test, 4);
 			}
 		).complete();
+
+		testService.on("testPipeline", p);
 
 		assert(arrayLen(test) == 0);
 
@@ -469,7 +471,7 @@ component extends="testbox.system.BaseSpec" {
 
 		var test = [];
 
-		testService.pipeline("testPipeline").add(
+		testService.pipeline().add(
 			function() {
 				arrayAppend(test, 1);
 			}
@@ -490,10 +492,6 @@ component extends="testbox.system.BaseSpec" {
 		assert(arrayLen(test) == 4);
 		assert(arrayToList(test) == "1,2,3,4");
 
-		testService.emit("testPipeline");
-
-		assert(arrayLen(test) == 8);
-		assert(arrayToList(test) == "1,2,3,4,1,2,3,4");
 	}
 
 	function testPipelineEventAsync () {
@@ -504,7 +502,7 @@ component extends="testbox.system.BaseSpec" {
 
 		var filename = expandPath(dir) & "/testPipelineEventAsync.txt";
 
-		testService.pipeline("testPipelineEventAsync", true).add(
+		var p = testService.pipeline().add(
 			function() {
 				arrayAppend(test, 1);
 			}
@@ -526,47 +524,9 @@ component extends="testbox.system.BaseSpec" {
 			}
 		).complete();
 
+		testService.on("testPipelineEventAsync", p, true);
+
 		testService.emit("testPipelineEventAsync");
-
-		sleep(10);
-
-		assert(fileExists(filename));
-
-		var filecontents = fileRead(filename);
-
-		assert(filecontents == "1,2,3,4", filecontents);
-
-	}
-
-	function testPipelineImmediateAsync () {
-
-		var testService = new com.testService();
-
-		var test = [];
-
-		var filename = expandPath(dir) & "/testPipelineImmediateAsync.txt";
-
-		testService.pipeline("testPipelineImmediateAsync", true).add(
-			function() {
-				arrayAppend(test, 1);
-			}
-		).add(
-			function() {
-				arrayAppend(test, 2);
-			}
-		).add(
-			function() {
-				arrayAppend(test, 3);
-			}
-		).add(
-			function() {
-				arrayAppend(test, 4);
-			}
-		).add(
-			function() {
-				filewrite(filename, arrayToList(test));
-			}
-		).complete().run();
 
 		sleep(10);
 

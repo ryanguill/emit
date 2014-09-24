@@ -75,6 +75,12 @@ component {
 			throw(type="Emit.maxListenersExceeded", message="Max Listeners exceeded for eventName: " & eventName, detail="Current Max Listeners value: " & getMaxListeners());
 		}
 
+		if (_isPipeline(listener)) {
+			if (!listener.isComplete()) {
+				throw(type="Emit.pipelineNotComplete", message="You must call complete() on the pipeline when you are done adding listeners");
+			}
+		}
+
 		arrayAppend(_emit.listeners[eventName], {listener=listener, async=async, timesToListen=timesToListen});
 
 		emit("newListener", listener);
@@ -170,18 +176,23 @@ component {
 
 		for (var listener in listeners) {
 
-			if (isStruct(listener.listener)) {
-				//this is a pipeline
-				listener.listener.run(argumentCollection=arguments);
-			} else {
+
 				//this is a regular listener
 				if (listener.async) {
-					arguments.f = listener.listener;
+					if (_isPipeline(listener.listener)) {
+						arguments.f = listener.listener.run;
+					} else {
+						arguments.f = listener.listener;
+					}
 					async(argumentCollection=arguments);
 					
 				} else {
 					try {
-						listener.listener(argumentCollection=arguments);
+						if (_isPipeline(listener.listener)) {
+							listener.listener.run(argumentCollection=arguments);
+						} else {
+							listener.listener(argumentCollection=arguments);
+						}
 					} catch (any e) {
 						arguments.exception = e;
 						if (localEventName != "error") {
@@ -192,7 +203,7 @@ component {
 						}
 					}
 				}
-			}
+
 
 			if (listener.timesToListen != -1) {
 				listener.timesToListen--;
@@ -225,38 +236,37 @@ component {
 		//writedump("done");
 	}
 
-	function pipeline (required string eventName, boolean async = false, boolean once = false) {
+	private boolean function _isPipeline (required any listener) {
+		return isStruct(listener) && structKeyExists(listener, "type") && listener.type == "PIPELINE";
+	}
+
+	function pipeline () {
 		var q = [];
 		var isComplete = false;
 
 		var callAsync = variables.async;
 		
 		var o = {
+			type = "PIPELINE",
 			add = function(required any f) {
 				arrayAppend(q, f);
 				return o;
 			},
 			complete = function() {
 				isComplete = true;
-				timesToListen = once ? 1 : 0;
-				addEventListener(eventName, o, async, timesToListen);
 				return o;
+			},
+			isComplete = function() {
+				return isComplete;
 			},
 			run = function() {
 				if (!isComplete) {
 					throw(type="Emit.pipelineNotComplete", message="You must call complete() on the pipeline when you are done adding listeners");
 				}
 				var args = arguments;
-				var execute = function () {
-					for (var f in q) {
-						f(argumentCollection=args);
-					}
-				};
 
-				if (async) {
-					callAsync(execute);
-				} else  {
-					execute();
+				for (var f in q) {
+					f(argumentCollection=args);
 				}
 
 			}
