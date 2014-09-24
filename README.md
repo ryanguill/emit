@@ -32,21 +32,20 @@ or more likely, from the outside:
 
 Usually the listener will be an anonymous function (which might or might not be a closure):
 
-```
+'''
 instance.addEventListener("eventName", function(data) {
     ...
 });
-```
-	
+'''
+
 Note: Event names are case sensitive by default.  You can call setCaseSensitiveEventNames(false) to change this.
 
 Most functions return an instance of the object so that they can be chained.
 
 ##API:
 
-```
-addEventListener (required string event, required any listener, boolean async = false, boolean once = false)
-```
+__addEventListener (required string event, required any listener, boolean async = false, boolean once = false)__
+
 Creates an event listener for a particular event emitted by the instance that you are calling addEventListener on.  Event is case sensitive by default.  Listener can be any custom function.  Async defaults to false.  If you use async true, the listener will be executed in a separate thread.  Keep the following in mind:
 
 - You will not be guaranteed that it will run at any particular time or order.
@@ -58,91 +57,63 @@ Once defaults to false - setting once to true will automatically remove the even
 If you try to add an event listener which exceeds the limit, an exception of type Emit.Emit.maxListenersExceeded will be thrown. See setMaxListeners().
 
 	
-```
-on (required string event, required any listener, boolean async = false)
-```
+__on (required string event, required any listener, boolean async = false)__
 
 Alias for addEventListener().
 
-```
-once (required string event, required any listener, boolean async = false)
-```
+__once (required string event, required any listener, boolean async = false)__
 
 Alias for addEventListner() with once=true.
 
-```
-removeListener (required string event, required any listener)
-```
+__removeListener (required string event, required any listener)__
 
 To remove a listener, you must pass in the exact listener you used to add the event listener initially.  Which means if you intend to remove a listener you need to create the listener in a separate variable and use it to both add and remove.
 
-```
-removeAllListeners (required string event)
-```
+__removeAllListeners (required string event)__
 
 Removes all listeners for a given event.
 
-```
-listeners (required string event)
-```
+__listeners (required string event)__
 
 Gets an array of all of the listeners.  Each item in the array is a structure with the keys: listner (function), async (boolean), and once (boolean);
 
-```
-emit(required string event, [other arguments])
-```
+__emit(required string event, [other arguments])__
 
 Fires an event of the given type.  Remember that events are case sensitive by default.  Event name is the only required argument, you can pass whatever other data you want into emit (or dispatch) and it will be passed along to the listner.
 
-```
-dispatch (required string event, [other arguments])
-```
+__dispatch (required string event, [other arguments])__
 
 Alias for emit().
 
-```
-async (required any f)
-```
+__async (required any f)__
 
 Convenience method.  Give it a function, it will run it in a separate thread.
 
-```
-pipeline(event)
-```
+__pipeline(event)__
 
 Not Yet Documented
 
-```
-dispatchError ()
-```
+__dispatchError ()__
 
 Convenience function for dispatching an event on "error".  By default, any exceptions in the calling of the listener will redispatch to "error", with an added argument of *exception*.  If no listeners exist for the "error" event, the exception is thrown.  
 
 
 Other Methods:
 
-```
-getMaxListeners ()
-```
+__getMaxListeners ()__
 
 By default, there is a limit of 10 listeners on a given event.  This is to help identify memory leaks and to listeners that are not being removed properly.  This will not be appropriate for all applications.  use setMaxListeners() to set to an appropriate level for your needs.  If you try to add an event listener which exceeds the limit, an exception of type Emit.Emit.maxListenersExceeded will be thrown.
 
 
-```
-setMaxListeners (required numeric n)
-```
+__setMaxListeners (required numeric n)__
 
 Set the maximum listeners per event. You must do this per instance of emit (or subclass). See getMaxListeners().
 
-```
-isCaseSensitiveEventName ()
-```
+__isCaseSensitiveEventName ()__
 
 Be default, emit treats event names as case sensitive.  This method returns true by default.  use setCaseSensitiveEventName() to override.  You must do this per instance of emit (or subclass).
 
-```
-setCaseSensitiveEventName (required boolean value)
-```
+__setCaseSensitiveEventName (required boolean value)__
 
 see isCaseSensitiveEventName().
 
