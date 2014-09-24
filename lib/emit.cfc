@@ -31,12 +31,12 @@ component {
 		}
 	}
 
-	private function _normalizeEventName (required string event) {
+	private function _normalizeEventName (required string eventName) {
 		_ensurePrivateVariables();
 		if (!_emit.caseSensitiveEventName) {
-			return ucase(event);
+			return ucase(eventName);
 		}
-		return event;
+		return eventName;
 	}
 
 	function setMaxListeners (required numeric n) {
@@ -62,42 +62,42 @@ component {
 		return _emit.caseSensitiveEventName;
 	}
 
-	function addEventListener (required string event, required any listener, boolean async = false, boolean once = false) {
+	function addEventListener (required string eventName, required any listener, boolean async = false, boolean once = false) {
 		_ensurePrivateVariables();
 
-		event = _normalizeEventName(event);
+		eventName = _normalizeEventName(eventName);
 
-		if (!structKeyExists(_emit.listeners, event)) {
-			_emit.listeners[event] = [];
+		if (!structKeyExists(_emit.listeners, eventName)) {
+			_emit.listeners[eventName] = [];
 		}
 
-		if (arrayLen(_emit.listeners[event]) >= getMaxListeners()) {
-			throw(type="Emit.maxListenersExceeded", message="Max Listeners exceeded for event: " & event, detail="Current Max Listeners value: " & getMaxListeners());
+		if (arrayLen(_emit.listeners[eventName]) >= getMaxListeners()) {
+			throw(type="Emit.maxListenersExceeded", message="Max Listeners exceeded for eventName: " & eventName, detail="Current Max Listeners value: " & getMaxListeners());
 		}
 
-		arrayAppend(_emit.listeners[event], {listener=listener, async=async, once=once});
+		arrayAppend(_emit.listeners[eventName], {listener=listener, async=async, once=once});
 
 		emit("newListener", listener);
 
 		return this;
 	}
 
-	function on (required string event, required any listener, boolean async = false) {
+	function on (required string eventName, required any listener, boolean async = false) {
 		return addEventListener(argumentCollection=arguments);
 	}
 
-	function once (required string event, required any listener, boolean async = false) {
+	function once (required string eventName, required any listener, boolean async = false) {
 		_ensurePrivateVariables();
-		addEventListener(event, listener, async, true);
+		addEventListener(eventName, listener, async, true);
 	}
 
-	function removeListener (required string event, required any listener) {
+	function removeListener (required string eventName, required any listener) {
 		_ensurePrivateVariables();
 
-		event = _normalizeEventName(event);
+		eventName = _normalizeEventName(eventName);
 
-		if (structKeyExists(_emit.listeners, event)){
-			var listeners = _emit.listeners[event];
+		if (structKeyExists(_emit.listeners, eventName)){
+			var listeners = _emit.listeners[eventName];
 
 			for (var i = 1; i <= arrayLen(listeners); i++) {
 				if (listener.equals(listeners[i].listener)) {
@@ -111,54 +111,54 @@ component {
 		return this;
 	}
 
-	function off (required string event, required any listener) {
+	function off (required string eventName, required any listener) {
 		removeListener(argumentCollection=arguments);
 	}
 
-	function removeAllListeners (required string event) {
+	function removeAllListeners (required string eventName) {
 		_ensurePrivateVariables();
 
-		event = _normalizeEventName(event);
+		eventName = _normalizeEventName(eventName);
 
-		if (structKeyExists(_emit.listeners, event)){
-			while (arrayLen(_emit.listeners[event])) {
-				removeListener(event, _emit.listeners[event][1].listener);
+		if (structKeyExists(_emit.listeners, eventName)){
+			while (arrayLen(_emit.listeners[eventName])) {
+				removeListener(eventName, _emit.listeners[eventName][1].listener);
 			}
 		}
 
 		return this;
 	}
 
-	function listeners (required string event) {
+	function listeners (required string eventName) {
 		_ensurePrivateVariables();
 
-		event = _normalizeEventName(event);
+		eventName = _normalizeEventName(eventName);
 
-		if (!structKeyExists(_emit.listeners, event)) {
+		if (!structKeyExists(_emit.listeners, eventName)) {
 			return [];
 		}
 
-		return duplicate(_emit.listeners[event]);
+		return duplicate(_emit.listeners[eventName]);
 	}
 
-	function emit (required string event) {
+	function emit (required string eventName) {
 		_ensurePrivateVariables();
 
-		event = _normalizeEventName(event);
+		eventName = _normalizeEventName(eventName);
 
-		var localEvent = event;
+		var localEventName = eventName;
 
-		if (!structKeyExists(_emit.listeners, event)) {
+		if (!structKeyExists(_emit.listeners, eventName)) {
 			return false;
 		}
 
-		var listeners = _emit.listeners[event];
+		var listeners = _emit.listeners[eventName];
 
 		if (!arrayLen(listeners)) {
 			return false;
 		}
 
-		structDelete(arguments, "event");
+		structDelete(arguments, "eventName");
 
 		for (var listener in listeners) {
 
@@ -176,7 +176,7 @@ component {
 						listener.listener(argumentCollection=arguments);
 					} catch (any e) {
 						arguments.exception = e;
-						if (localEvent != "error") {
+						if (localEventName != "error") {
 							dispatchError(argumentCollection=arguments);
 						} else {
 							arguments.skipErrorEvent = true;
@@ -187,7 +187,7 @@ component {
 			}
 
 			if (listener.once) {
-				removeListener(localEvent, listener.listener);
+				removeListener(localEventName, listener.listener);
 			}
 
 		}
@@ -195,7 +195,7 @@ component {
 		return true;
 	}
 
-	function dispatch (required string event) {
+	function dispatch (required string eventName) {
 		return emit(argumentCollection=arguments);
 	}
 
@@ -215,7 +215,7 @@ component {
 		//writedump("done");
 	}
 
-	function pipeline (required string event, boolean async = false, boolean once = false) {
+	function pipeline (required string eventName, boolean async = false, boolean once = false) {
 		var q = [];
 		var isComplete = false;
 
@@ -228,7 +228,7 @@ component {
 			},
 			complete = function() {
 				isComplete = true;
-				addEventListener(event, o, async, once);
+				addEventListener(eventName, o, async, once);
 				return o;
 			},
 			run = function() {
@@ -257,7 +257,7 @@ component {
 	function dispatchError () {
 		param name="arguments.skipErrorEvent" default="false";
 		if (structKeyExists(_emit.listeners, "error") && arrayLen(_emit.listeners["error"]) && !skipErrorEvent) {
-			arguments.event = "error";
+			arguments.eventName = "error";
 			return emit(argumentCollection=arguments);
 		}
 
@@ -270,32 +270,5 @@ component {
 		}
 
 	}
-
-	/*
-		abandoning this for the moment - it requires you to refer to methods as variables.method() inside of the monkeypatched object, which isnt ideal.  Not sure if there is a better way or not
-
-		function makeEmitter (required target) {
-			//check to make sure that the target doesnt already have any of the functions we want to add
-			var functionsToAdd = ["_ensurePrivateVariables","addEventListener","on","once","removeListener","removeAllListeners","setMaxListeners","getMaxListeners","listeners","emit","dispatch","dispatchError"];
-
-			var f = {};
-
-			for (f in getMetadata(target).functions) {
-				if (arrayFindNoCase(functionsToAdd, f.name)) {
-					throw(type="Emit.duplicateFunctionDefinition", message="Error making target an event Emitter, target already defines method: " & f.name);
-				}
-			}
-
-			//monkeypatch
-			//cant make ensurePrivateVariables private unfortunately
-			for (f in functionsToAdd) {
-				target[f] = variables[f];
-			}
-
-			return target;
-		}
-	*/
-
-
 
 }

@@ -2,7 +2,7 @@ component extends="testbox.system.BaseSpec" {
 
 	function beforeTests() {
 		//create a folder for the test files to be written to
-		variables.dir = getTempDirectory() & "/emitBasicTest" & dateFormat(now(),"yyyymmdd") & timeformat(now(),"HHmmss");
+		variables.dir = getTempDirectory() & "/emitBasicTest" & dateFormat(now(),"yyyymmdd") & timeformat(now(),"HHmmssl");
 
 		directoryCreate(dir);
 	}
@@ -13,9 +13,7 @@ component extends="testbox.system.BaseSpec" {
 			if (directoryExists(dir)) {
 				directoryDelete(dir);
 			}
-		} catch (any e) {
-
-		}
+		} catch (any e) {}
 	}
 
 	function setup (currentMethod) {
