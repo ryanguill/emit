@@ -68,8 +68,8 @@ component {
 			_emit.listeners[event] = [];
 		}
 
-		if (arrayLen(_emit.listeners[event]) > getMaxListeners()) {
-			throw(type="Emit.maxListenersExceeded", message="Max Listeners exceeded for event: " & event, detail="Current Max Listeners value: " & getMaxListeners);
+		if (arrayLen(_emit.listeners[event]) >= getMaxListeners()) {
+			throw(type="Emit.maxListenersExceeded", message="Max Listeners exceeded for event: " & event, detail="Current Max Listeners value: " & getMaxListeners());
 		}
 
 		arrayAppend(_emit.listeners[event], {listener=listener, async=async, once=once});
@@ -98,8 +98,8 @@ component {
 
 			for (var i = 1; i <= arrayLen(listeners); i++) {
 				if (listener.equals(listeners[i].listener)) {
+					emit("removeListener", listeners[i].listener);
 					arrayDeleteAt(listeners, i);
-					emit("removeListener", listener.listener);
 					break;
 				}
 			}
@@ -113,9 +113,10 @@ component {
 
 		event = _normalizeEventName(event);
 
-		//todo: check to see if reinitializing the array is faster than clearing it
 		if (structKeyExists(_emit.listeners, event)){
-			arrayClear(_emit.listeners[event]);
+			while (arrayLen(_emit.listeners[event])) {
+				removeListener(event, _emit.listeners[event][1].listener);
+			}
 		}
 
 		return this;
@@ -133,7 +134,7 @@ component {
 		return duplicate(_emit.listeners[event]);
 	}
 
-	function emit(required string event) {
+	function emit (required string event) {
 		_ensurePrivateVariables();
 
 		event = _normalizeEventName(event);
@@ -168,13 +169,18 @@ component {
 						listener.listener(argumentCollection=arguments);
 					} catch (any e) {
 						arguments.exception = e;
-						dispatchError(argumentCollection=arguments);
+						if (localEvent != "error") {
+							dispatchError(argumentCollection=arguments);
+						} else {
+							arguments.skipErrorEvent = true;
+							dispatchError(argumentCollection=arguments);
+						}
 					}
 				}
 			}
 
 			if (listener.once) {
-				emit.removeListener(localEvent, listener.listener);
+				removeListener(localEvent, listener.listener);
 			}
 
 		}
@@ -209,7 +215,7 @@ component {
 		var callAsync = variables.async;
 		
 		var o = {
-			then = function(required any f) {
+			add = function(required any f) {
 				arrayAppend(q, f);
 				return o;
 			},
@@ -223,25 +229,27 @@ component {
 					throw(type="Emit.pipelineNotComplete", message="You must call complete() on the pipeline when you are done adding listeners");
 				}
 				var args = arguments;
-				for (var f in q) {
-					if (async) {
-						callAsync(function() {
-							f(argumentCollection=args);
-						});
-					} else {
+				var execute = function () {
+					for (var f in q) {
 						f(argumentCollection=args);
 					}
+				};
+
+				if (async) {
+					callAsync(execute);
+				} else  {
+					execute();
 				}
+
 			}
 		};
 
 		return o;
 	}
 
-
-
 	function dispatchError () {
-		if (structKeyExists(_emit.listeners, "error") && arrayLen(_emit.listeners["error"])) {
+		param name="arguments.skipErrorEvent" default="false";
+		if (structKeyExists(_emit.listeners, "error") && arrayLen(_emit.listeners["error"]) && !skipErrorEvent) {
 			arguments.event = "error";
 			return emit(argumentCollection=arguments);
 		}
