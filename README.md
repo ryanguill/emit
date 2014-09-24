@@ -12,7 +12,7 @@ I aim to support Railo 4+ first, and ACF 10+ secondarily.  You could probably ba
 
 ##Quick Start Guide:
 
-Extend emit.cfc with any cfc you want.  There is no constructor so no need to call an init method.  Or, if you just need an application wide event manager, just instantiate emit.cfc directly.
+emit.cfc in the lib folder is all you need.  Put it anywhere you want.  Extend emit.cfc with any cfc you want.  There is no constructor so no need to call an init method.  Or, if you just need an application wide event manager, just instantiate emit.cfc directly.
 
 To emit an event from inside of your cfc
 
