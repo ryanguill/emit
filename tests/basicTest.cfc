@@ -525,8 +525,6 @@ component extends="testbox.system.BaseSpec" {
 
 		testService.on("extensionPointEvent", function(data) {
 			data.newKey = "newValue";
-			writedump(arguments);
-			abort;
 		});
 
 		var outputData = testService.extensionPointPositional(inputData);
