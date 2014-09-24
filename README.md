@@ -6,7 +6,7 @@ emit
 The primary goal of this project is to be similar to the event emitter in node.js, although this project might deviate
 in some ways from its api.  It also seeks to provide an easy way to create async code in CFML.  Any event listener can be created as async.
 
-> Note! this project is just getting started.  It has not been completely tested yet, although I expect to finish that soon.  The API is not finalized and very well could change.  Consider it alpha quality at this point.  Don't use it in production without testing it for yourself.  Documentation and tests will be sparse for the time being.  Pull requests or issues for code, documentation or tests welcome!
+> Note! this project is just getting started.  It has been mostly tested, but I am not claiming 100% coverage yet.  The API is not finalized and very well could change.  Consider it beta quality at this point.  Don't use it in production without testing it for yourself.  Pull requests or issues for code, documentation or tests welcome!
 
 I aim to support Railo 4+ first, and ACF 10+ secondarily.  You could probably back-port this project to tag based to as far as CF 8 - this is left as an exercise for the cursed.  I am not interested in tag based pull requests for this project.
 
@@ -145,6 +145,10 @@ setCaseSensitiveEventName (required boolean value)
 ```
 
 see isCaseSensitiveEventName().
+
+##Tests
+
+Download and provide a mapping to testbox in /tests/Application.cfc, then run tests/index.cfm?opt_run=true
 
 
 ##License
