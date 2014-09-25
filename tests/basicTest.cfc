@@ -512,30 +512,46 @@ component extends="testbox.system.BaseSpec" {
 
 	}
 
-
-	function testPositionalArgs () {
-
-		//the scenario here is that you are inside of a service and you want to
-		//provide a way for users outside of the service to extend or intercept
-		//some functionality.
-
+	function testImplicitEventNameArgument () {
 		var testService = new com.testService();
 
-		var inputData = {foo = "bar"};
-
-		testService.on("extensionPointEvent", function(data) {
-			data.newKey = "newValue";
+		testService.on("testEvent", function() {
+			writeoutput(__eventName);
 		});
 
-		var outputData = testService.extensionPointPositional(inputData);
+		savecontent variable="local.outputData" {
+			testService.emit("testEvent");
+		}
 
-		assert(structKeyExists(outputData, "foo"));
-		assert(outputData.foo == "bar");
+		assert(local.outputData == "testEvent");
 
-		assert(structKeyExists(outputData, "newKey"));
-		assert(outputData.newKey == "newValue");
+		assert(local.outputData == "testEvent");
+
+		savecontent variable="local.outputData" {
+			testService.emit("testEvent", {__eventName="foobar"});
+		};
+
+		assert(local.outputData == "foobar");
+
+		testService.on("testEvent2", function() {
+			writeoutput(structKeyList(arguments));
+		});
+
+		savecontent variable="local.outputData" {
+			testService.emit("testEvent2");
+		};
+
+		assert(local.outputData == "__eventName");
+
+		savecontent variable="local.outputData" {
+			testService.emit("testEvent2", {foo="bar"});
+		};
+
+		assert(findNoCase("__eventName",local.outputData));
+		assert(findNoCase("foo",local.outputData));
 
 	}
+
 
 
 	function testEmit () {
@@ -604,7 +620,7 @@ component extends="testbox.system.BaseSpec" {
 
 		var inputData = {firstname="Ryan", lastname="Guill"};
 
-		testService.emit(eventName="testCompose", data=inputData);
+		testService.emit("testCompose", {data=inputData});
 
 		assert(structKeyExists(inputData, "fullname"));
 		assert(inputData.fullname == "Guill, Ryan");

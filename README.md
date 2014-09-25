@@ -16,11 +16,11 @@ emit.cfc in the lib folder is all you need.  Put it anywhere you want.  Extend e
 
 To emit an event from inside of your cfc
 
-    emit(eventname, [data]);
+    emit(eventname, [optional struct of data]);
     
 or call emit from outside if you need to:
 
-    instance.emit(eventname, [data]);
+    instance.emit(eventname, [optional struct of data]);
     
 To listen for an event from inside of your cfc:
 
@@ -51,11 +51,11 @@ Creates an event listener for a particular event emitted by the instance that yo
 - You will not be guaranteed that it will run at any particular time or order.
 - You will not be able to send data into the output buffer.  This makes debugging difficult - use logging or write out files.
 - You will have access to the data that you close over inside of your listener.  Make sure you have everything you need.
+- You cannot use positional arguments in listners.  Only depend on named arguments.  You can depend on named arguments that are not defined in the method definition though.
 
 Once defaults to false - setting once to true will automatically remove the event listener the first time it is called.  Useful for fire once async handling.
 
 If you try to add an event listener which exceeds the limit, an exception of type Emit.Emit.maxListenersExceeded will be thrown. See setMaxListeners().
-
 	
 __on (required string event, required any listener, boolean async = false)__
 
@@ -77,11 +77,11 @@ __listeners (required string event)__
 
 Gets an array of all of the listeners.  Each item in the array is a structure with the keys: listner (function), async (boolean), and once (boolean);
 
-__emit(required string event, [other arguments])__
+__emit(required string event, [optional arguments struct])__
 
-Fires an event of the given type.  Remember that events are case sensitive by default.  Event name is the only required argument, you can pass whatever other data you want into emit (or dispatch) and it will be passed along to the listner.
+Fires an event of the given type.  Remember that events are case sensitive by default.  Event name is the only required argument, you can optionally pass a struct of arguments to be passed to the listener by name.  Remember that you cannot depend on positional arguments in listeners.  The special argument __eventName will always be passed to the listeners.  You can override this in the arguments struct if you know what you are doing.
 
-__dispatch (required string event, [other arguments])__
+__dispatch (required string event, [optional arguments struct])__
 
 Alias for emit().
 
@@ -89,7 +89,7 @@ __async (required any f)__
 
 Convenience method.  Give it a function, it will run it in a separate thread.
 
-__pipeline(event)__
+__pipeline()__
 
 Not Yet Documented
 

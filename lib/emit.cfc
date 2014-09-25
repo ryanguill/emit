@@ -83,7 +83,7 @@ component {
 
 		arrayAppend(_emit.listeners[eventName], {listener=listener, async=async, timesToListen=timesToListen});
 
-		emit("newListener", listener);
+		emit("newListener", {listener=listener});
 
 		return this;
 	}
@@ -114,7 +114,7 @@ component {
 
 			for (var i = 1; i <= arrayLen(_emit.listeners[eventName]); i++) {
 				if (listener.equals(_emit.listeners[eventName][i].listener)) {
-					emit("removeListener", _emit.listeners[eventName][i].listener);
+					emit("removeListener", {listener=_emit.listeners[eventName][i].listener});
 					arrayDeleteAt(_emit.listeners[eventName], i);
 
 					return true;
@@ -162,12 +162,12 @@ component {
 		return duplicate(_emit.listeners[eventName]);
 	}
 
-	function emit (required string eventName) {
+	function emit (required string eventName, struct args = {}) {
 		_ensurePrivateVariables();
 
 		eventName = _normalizeEventName(eventName);
 
-		var localEventName = eventName;
+		param name="args.__eventName" default=arguments.eventName;
 
 		if (!structKeyExists(_emit.listeners, eventName)) {
 			return false;
@@ -179,43 +179,39 @@ component {
 			return false;
 		}
 
-		structDelete(arguments, "eventName");
-
 		for (var listener in listeners) {
 
-
-				//this is a regular listener
-				if (listener.async) {
-					if (_isPipeline(listener.listener)) {
-						arguments.f = listener.listener.run;
-					} else {
-						arguments.f = listener.listener;
-					}
-					async(argumentCollection=arguments);
-					
+			if (listener.async) {
+				if (_isPipeline(listener.listener)) {
+					arguments.f = listener.listener.run;
 				} else {
-					try {
-						if (_isPipeline(listener.listener)) {
-							listener.listener.run(argumentCollection=arguments);
-						} else {
-							listener.listener(argumentCollection=arguments);
-						}
-					} catch (any e) {
-						arguments.exception = e;
-						if (localEventName != "error") {
-							dispatchError(argumentCollection=arguments);
-						} else {
-							arguments.skipErrorEvent = true;
-							dispatchError(argumentCollection=arguments);
-						}
+					arguments.f = listener.listener;
+				}
+				async(argumentCollection=arguments);
+			} else {
+				try {
+					if (_isPipeline(listener.listener)) {
+						listener.listener.run(argumentCollection=args);
+					} else {
+						listener.listener(argumentCollection=args);
+					}
+				} catch (any e) {
+					args.exception = e;
+					if (eventName != "error") {
+						dispatchError(args);
+					} else {
+						args.skipErrorEvent = true;
+						dispatchError(args);
+
 					}
 				}
+			}
 
 
 			if (listener.timesToListen != -1) {
 				listener.timesToListen--;
 				if (listener.timesToListen < 1) {
-					removeListener(localEventName, listener.listener);
+					removeListener(eventName, listener.listener);
 				}
 			}
 		}
@@ -223,7 +219,7 @@ component {
 		return true;
 	}
 
-	function dispatch (required string eventName) {
+	function dispatch (required string eventName, struct args = {}) {
 		return emit(argumentCollection=arguments);
 	}
 
@@ -264,11 +260,10 @@ component {
 			isComplete = function() {
 				return isComplete;
 			},
-			run = function() {
+			run = function(struct args = {}) {
 				if (!isComplete) {
 					throw(type="Emit.pipelineNotComplete", message="You must call complete() on the pipeline when you are done adding listeners");
 				}
-				var args = arguments;
 
 				for (var f in q) {
 					f(argumentCollection=args);
@@ -280,16 +275,15 @@ component {
 		return o;
 	}
 
-	function dispatchError () {
-		param name="arguments.skipErrorEvent" default="false";
-		if (structKeyExists(_emit.listeners, "error") && arrayLen(_emit.listeners["error"]) && !skipErrorEvent) {
-			arguments.eventName = "error";
-			return emit(argumentCollection=arguments);
+	function dispatchError (struct args = {}) {
+		param name="args.skipErrorEvent" default="false";
+		if (structKeyExists(_emit.listeners, "error") && arrayLen(_emit.listeners["error"]) && !args.skipErrorEvent) {
+			return emit("error", args);
 		}
 
-		if (structKeyExists(arguments, "exception")) {
-			throw(arguments.exception);
-		} else if (structKeyExists(arguments, "message")) {
+		if (structKeyExists(args, "exception")) {
+			throw(args.exception);
+		} else if (structKeyExists(args, "message")) {
 			throw(message=message);
 		} else {
 			throw(type="Emit.unknownException", message="Unhandled Exception");
