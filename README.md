@@ -58,7 +58,7 @@ timesToListen defaults to -1, which means it will listen until manually removed 
 
 You can also provide the eventName argument as an array of event names to listen on multiple events with the same handler.
 
-If you try to add an event listener which exceeds the limit, an exception of type Emit.Emit.maxListenersExceeded will be thrown. See setMaxListeners().  see also many().
+If you try to add an event listener which exceeds the limit, an exception of type Emit.maxListenersExceeded will be thrown. See setMaxListeners().  see also many().
 	
 __on (required string eventName, required any listener, boolean async = false)__
 
