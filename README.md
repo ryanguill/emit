@@ -32,11 +32,11 @@ or more likely, from the outside:
 
 Usually the listener will be an anonymous function (which might or might not be a closure):
 
-'''
+```
 instance.addEventListener("eventName", function(data) {
     ...
 });
-'''
+```
 
 Note: Event names are case sensitive by default.  You can call setCaseSensitiveEventNames(false) to change this.
 
@@ -48,7 +48,7 @@ __addEventListener (required string eventName, required any listener, boolean as
 
 Creates an event listener for a particular event emitted by the instance that you are calling addEventListener on.  Event is case sensitive by default.  Listener can be any custom function.  Async defaults to false.  If you use async true, the listener will be executed in a separate thread.  Keep the following in mind:
 
-- Event
+- Event names must be a string.
 - You will not be guaranteed that it will run at any particular time or order.
 - You will not be able to send data into the output buffer.  This makes debugging difficult - use logging or write out files.
 - You will have access to the data that you close over inside of your listener.  Make sure you have everything you need.
@@ -78,7 +78,7 @@ To remove a listener, you must pass in the exact listener you used to add the ev
 
 You can also provide the eventName argument as an array of event names to remove the same handler from multiple events.  This is only useful if you used the exact same handler for multiple events.
 
-__off(required string eventName, required any listener)__
+__off (required string eventName, required any listener)__
 
 Alias for removeListener();
 
@@ -91,7 +91,7 @@ __listeners (required string eventName)__
 
 Gets an array of all of the listeners.  Each item in the array is a structure with the keys: listner (function), async (boolean), and once (boolean);
 
-__emit(required string eventName, [optional arguments struct])__
+__emit (required string eventName, [optional arguments struct])__
 
 Fires an event of the given type.  Remember that events are case sensitive by default.  Event name is the only required argument, you can optionally pass a struct of arguments to be passed to the listener by name.  Remember that you cannot depend on positional arguments in listeners.  The special argument __eventName will always be passed to the listeners.  You can override this in the arguments struct if you know what you are doing.
 You can also provide the eventName argument as an array of event names to fire multiple events with the same argument collection.
@@ -104,7 +104,7 @@ __async (required any f)__
 
 Convenience method.  Give it a function, it will run it in a separate thread.
 
-__pipeline()__
+__pipeline ()__
 
 Not Yet Documented
 
