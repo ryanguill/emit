@@ -31,8 +31,13 @@ component {
 		}
 	}
 
-	private function _normalizeEventName (required string eventName) {
+	private function _normalizeEventName (required any eventName) {
 		_ensurePrivateVariables();
+
+		if (!isSimpleValue(eventName)) {
+			throw(type="Emit.invalidEventName", message="Invalid Event Name");
+		}
+
 		if (!_emit.caseSensitiveEventName) {
 			return ucase(eventName);
 		}
@@ -62,8 +67,20 @@ component {
 		return _emit.caseSensitiveEventName;
 	}
 
-	function addEventListener (required string eventName, required any listener, boolean async = false, numeric timesToListen = -1) {
+	function addEventListener (required any eventName, required any listener, boolean async = false, numeric timesToListen = -1) {
 		_ensurePrivateVariables();
+
+		if (isArray(eventName)) {
+			for (var en in eventName) {
+				addEventListener(en, listener, async, timesToListen);
+			}
+
+			return this;
+		}
+
+		if (timesToListen != -1 && (int(timesToListen) != timesToListen || timesToListen < 1)) {
+			throw(type="Emit.InvalidTimesToListen", message="timesToListen must be a positive integer");
+		}
 
 		eventName = _normalizeEventName(eventName);
 
@@ -88,25 +105,30 @@ component {
 		return this;
 	}
 
-	function on (required string eventName, required any listener, boolean async = false) {
+	function on (required any eventName, required any listener, boolean async = false) {
 		return addEventListener(argumentCollection=arguments);
 	}
 
-	function once (required string eventName, required any listener, boolean async = false) {
+	function once (required any eventName, required any listener, boolean async = false) {
 		_ensurePrivateVariables();
 		addEventListener(eventName, listener, async, 1);
 	}
 
-	function many (required string eventName, required any listener, required numeric timesToListen, boolean async = false ) {
+	function many (required any eventName, required any listener, required numeric timesToListen, boolean async = false ) {
 		_ensurePrivateVariables();
-		if (int(timesToListen) != timesToListen || timesToListen < 1) {
-			throw(type="Emit.InvalidTimesToListen", message="timesToListen must be a positive integer");
-		}
 		addEventListener(eventName, listener, async, timesToListen);
 	}
 
-	function removeListener (required string eventName, required any listener) {
+	function removeListener (required any eventName, required any listener) {
 		_ensurePrivateVariables();
+
+		if (isArray(eventName)) {
+			var output = false;
+			for (var en in eventName) {
+				output = removeListener(en, listener) || output;
+			}
+			return output;
+		}
 
 		eventName = _normalizeEventName(eventName);
 
@@ -120,18 +142,24 @@ component {
 					return true;
 				}
 			}
-
 		}
 
 		return false;
 	}
 
-	function off (required string eventName, required any listener) {
+	function off (required any eventName, required any listener) {
 		removeListener(argumentCollection=arguments);
 	}
 
-	function removeAllListeners (required string eventName) {
+	function removeAllListeners (required any eventName) {
 		_ensurePrivateVariables();
+
+		if (isArray(eventName)) {
+			for (var en in eventName) {
+				removeAllListeners(en);
+			}
+			return this;
+		}
 
 		eventName = _normalizeEventName(eventName);
 
@@ -162,8 +190,16 @@ component {
 		return duplicate(_emit.listeners[eventName]);
 	}
 
-	function emit (required string eventName, struct args = {}) {
+	function emit (required any eventName, struct args = {}) {
 		_ensurePrivateVariables();
+
+		if (isArray(eventName)) {
+			var output = false;
+			for (var en in eventName) {
+				output = emit(en, duplicate(args)) || output;
+			}
+			return output;
+		}
 
 		eventName = _normalizeEventName(eventName);
 
@@ -180,7 +216,6 @@ component {
 		}
 
 		for (var listener in listeners) {
-
 			if (listener.async) {
 				if (_isPipeline(listener.listener)) {
 					arguments.f = listener.listener.run;
@@ -202,11 +237,9 @@ component {
 					} else {
 						args.skipErrorEvent = true;
 						dispatchError(args);
-
 					}
 				}
 			}
-
 
 			if (listener.timesToListen != -1) {
 				listener.timesToListen--;
@@ -219,7 +252,7 @@ component {
 		return true;
 	}
 
-	function dispatch (required string eventName, struct args = {}) {
+	function dispatch (required any eventName, struct args = {}) {
 		return emit(argumentCollection=arguments);
 	}
 
@@ -288,7 +321,5 @@ component {
 		} else {
 			throw(type="Emit.unknownException", message="Unhandled Exception");
 		}
-
 	}
-
 }

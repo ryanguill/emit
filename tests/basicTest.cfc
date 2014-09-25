@@ -89,6 +89,37 @@ component extends="testbox.system.BaseSpec" {
 		}
 
 		assert(local.outputData == "testOnSyncSuccess");
+	}
+
+	function testMultipleListeners () {
+
+		var testService = new com.testService();
+		var testResult = false;
+
+		testService.on(["test1","test2"], function() {
+			writeoutput(__eventName);
+		});
+
+		savecontent variable="local.outputData" {
+			testResult = testService.emit("test1");
+		}
+
+		assert(local.outputData == "test1");
+		assert(testResult);
+
+		savecontent variable="local.outputData" {
+			testResult = testService.emit("test2");
+		}
+
+		assert(local.outputData == "test2");
+		assert(testResult);
+
+		savecontent variable="local.outputData" {
+			testResult = testService.emit("test");
+		}
+
+		assert(local.outputData == "");
+		assert(!testResult);
 
 	}
 
@@ -350,6 +381,7 @@ component extends="testbox.system.BaseSpec" {
 
 	}
 
+
 	function testOff () {
 		var testService = new com.testService();
 
@@ -372,6 +404,38 @@ component extends="testbox.system.BaseSpec" {
 		}
 
 		assert(local.output2 == "");
+	}
+
+	function testMultipleRemoveAllListeners () {
+		var testService = new com.testService();
+
+		testService.on("test1", function() {});
+
+		testService.on("test2", function() {});
+
+		assert(arrayLen(testService.listeners("test1")) == 1);
+		assert(arrayLen(testService.listeners("test2")) == 1);
+
+		testService.removeAllListeners(["test1","test2"]);
+
+		assert(arrayLen(testService.listeners("test1")) == 0);
+		assert(arrayLen(testService.listeners("test2")) == 0);
+	}
+
+	function testMultipleRemoveListeners () {
+		var testService = new com.testService();
+
+		var handler = function(){};
+
+		testService.on(["multipleRemoveListenersEvent1", "multipleRemoveListenersEvent2"], handler);
+
+		assert(arrayLen(testService.listeners("multipleRemoveListenersEvent1")) == 1);
+		assert(arrayLen(testService.listeners("multipleRemoveListenersEvent2")) == 1);
+
+		testService.removeListener(["multipleRemoveListenersEvent2","multipleRemoveListenersEvent1"], handler);
+
+		assert(arrayLen(testService.listeners("multipleRemoveListenersEvent1")) == 0);
+		assert(arrayLen(testService.listeners("multipleRemoveListenersEvent2")) == 0);
 	}
 
 	function testListeners () {
@@ -579,6 +643,62 @@ component extends="testbox.system.BaseSpec" {
 
 		assert(!result);
 
+	}
+
+	function testMultipleEmit () {
+		var testService = new com.testService();
+
+
+		testService.on("multipleEmit1", function(){
+			writeoutput(arguments.__eventName);
+		});
+
+		savecontent variable="local.output" {
+			var result = testService.emit(["multipleEmit1", "multipleEmit2"]);
+		}
+
+		assert(result);
+		assert(local.output == "multipleEmit1");
+
+		testService.on("multipleEmit2", function(){
+			writeoutput(arguments.__eventName);
+		});
+
+		savecontent variable="local.output" {
+			result = testService.emit(["multipleEmit2", "multipleEmit1"]);
+		}
+
+		assert(result);
+		assert(findNoCase("multipleEmit1", local.output));
+		assert(findNoCase("multipleEmit2", local.output));
+	}
+
+	function testMultipleDispatch () {
+		var testService = new com.testService();
+
+
+		testService.on("multipleDispatch1", function(){
+			writeoutput(arguments.__eventName);
+		});
+
+		savecontent variable="local.output" {
+			var result = testService.dispatch(["multipleDispatch1", "multipleDispatch2"]);
+		}
+
+		assert(result);
+		assert(local.output == "multipleDispatch1");
+
+		testService.on("multipleDispatch2", function(){
+			writeoutput(arguments.__eventName);
+		});
+
+		savecontent variable="local.output" {
+			result = testService.dispatch(["multipleDispatch2", "multipleDispatch1"]);
+		}
+
+		assert(result);
+		assert(findNoCase("multipleDispatch2", local.output));
+		assert(findNoCase("multipleDispatch1", local.output));
 	}
 
 	function testDispatch () {
