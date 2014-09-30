@@ -322,4 +322,60 @@ component {
 			throw(type="Emit.unknownException", message="Unhandled Exception");
 		}
 	}
+
+	private function __inject (required string name, required any f, required boolean isPublic) {
+		if (isPublic) {
+			this[name] = f;
+			variables[name] = f;
+		} else {
+			variables[name] = f;
+		}
+	}
+
+	private function __cleanup () {
+		structDelete(variables, "__inject");
+		structDelete(this, "__inject");
+		structDelete(variables, "__cleanup");
+		structDelete(this, "__cleanup");
+	}
+
+	function makeEmitter (required target) {
+
+		//write the injector first
+		target["__inject"] = variables["__inject"];
+		target["__cleanup"] = variables["__cleanup"];
+
+		//check to make sure that the target doesnt already have any of the functions we want to add
+		var functionsNotToAdd = ["__inject","__cleanup","makeEmitter"];
+		var functionsToAdd = [];
+
+		var f = {};
+
+		var sourceFunctions = getMetadata(this).functions;
+
+		for (f in sourceFunctions) {
+			if (!arrayFindNoCase(functionsNotToAdd, f.name)) {
+				arrayAppend(functionsToAdd, f.name);
+			}
+		}
+
+		for (f in getMetadata(target).functions) {
+			if (arrayFindNoCase(functionsToAdd, f.name)) {
+				throw(message="Error making target an event Emitter, target already defines method: " & f.name);
+			}
+		}
+
+		//now use our new inject function to put in the rest
+		for (f in functionsToAdd) {
+			var meta = getMetadata(variables[f]);
+			//because cf be dumb
+			param name="meta.access" default="public";
+			target.__inject(f, variables[f], (meta.access == "public" ? true : false));
+		}
+
+		target.__cleanup();
+
+		return target;
+	}
+
 }

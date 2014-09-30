@@ -13,7 +13,6 @@ component extends="testbox.system.BaseSpec" {
 
 		writeoutput(dir & "<hr>");
 
-
 	}
 
 	function afterTests() {
@@ -26,18 +25,18 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function setup (currentMethod) {
-
+		testService = new com.testService();
 	}
 
 	function teardown (currentMethod) {
 
 	}
 
-	function testSimpleSync () {
-		var testService = new com.testService();
-
+	function testExtendsEmit() {
 		$assert.instanceOf(testService, "lib.emit", "testService is not extending emit");
+	}
 
+	function testSimpleSync () {
 		var output = [];
 
 		testService.on("myEvent", function() {
@@ -78,7 +77,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testOnSync () {
-		var testService = new com.testService();
 
 		testService.on("testOnSync", function() {
 			writeoutput("testOnSyncSuccess");
@@ -93,7 +91,6 @@ component extends="testbox.system.BaseSpec" {
 
 	function testMultipleListeners () {
 
-		var testService = new com.testService();
 		var testResult = false;
 
 		testService.on(["test1","test2"], function() {
@@ -124,7 +121,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testAddEventListenerSync () {
-		var testService = new com.testService();
 
 		testService.on("testAddEventListenerSync", function() {
 			writeoutput("testAddEventListenerSyncSuccess");
@@ -139,7 +135,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testOnceSync () {
-		var testService = new com.testService();
 
 		testService.once("testOnceSync", function() {
 			writeoutput("testOnceSyncSuccess");
@@ -171,7 +166,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testManySync () {
-		var testService = new com.testService();
 
 		testService.many("testManySync", function() {
 			writeoutput("testManySyncSuccess");
@@ -204,7 +198,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testMaxListeners () {
-		var testService = new com.testService();
 
 		assert(testService.getMaxListeners() == 10);
 
@@ -246,8 +239,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testCaseSensitivity() {
-
-		var testService = new com.testService();
 
 		assert(testService.isCaseSensitiveEventName() == true);
 
@@ -320,21 +311,25 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testNewListenerEvent () {
-		var testService = new com.testService();
 
-		testService.on("newListener", function() {
-			writeOutput("newListenerFired");
-		});
+		savecontent variable="local.testoutput" {
+			testService.on("newListener", function() {
+				writeOutput("newListenerFired");
+			});
+		}
+
+		assert(local.testOutput == "newListenerFired");
 
 		savecontent variable="local.testoutput" {
 			testService.on("SomeEvent", function() {});
 		}
 
 		assert(local.testOutput == "newListenerFired");
+
+
 	}
 
 	function testRemoveListenerEvent () {
-		var testService = new com.testService();
 
 		testService.on("removeListener", function() {
 			writeOutput("removeListenerFired");
@@ -383,7 +378,6 @@ component extends="testbox.system.BaseSpec" {
 
 
 	function testOff () {
-		var testService = new com.testService();
 
 		testService.on("removeListener", function() {
 			writeOutput("removeListenerFired");
@@ -407,7 +401,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testMultipleRemoveAllListeners () {
-		var testService = new com.testService();
 
 		testService.on("test1", function() {});
 
@@ -423,7 +416,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testMultipleRemoveListeners () {
-		var testService = new com.testService();
 
 		var handler = function(){};
 
@@ -439,7 +431,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testListeners () {
-		var testService = new com.testService();
 
 		var handler = function(){};
 
@@ -461,8 +452,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testError () {
-
-		var testService = new com.testService();
 
 		var handler = function(exception) {
 			writeoutput(exception.type);
@@ -489,8 +478,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testPipelineEventSync () {
-
-		var testService = new com.testService();
 
 		var test = [];
 
@@ -525,8 +512,6 @@ component extends="testbox.system.BaseSpec" {
 
 	function testPipelineImmediateSync () {
 
-		var testService = new com.testService();
-
 		var test = [];
 
 		testService.pipeline().add(
@@ -558,8 +543,6 @@ component extends="testbox.system.BaseSpec" {
 		//provide a way for users outside of the service to extend or intercept
 		//some functionality.
 
-		var testService = new com.testService();
-
 		var inputData = {foo = "bar"};
 
 		testService.on("extensionPointEvent", function(data) {
@@ -577,7 +560,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testImplicitEventNameArgument () {
-		var testService = new com.testService();
 
 		testService.on("testEvent", function() {
 			writeoutput(__eventName);
@@ -619,7 +601,6 @@ component extends="testbox.system.BaseSpec" {
 
 
 	function testEmit () {
-		var testService = new com.testService();
 
 		var result = testService.emit("noListeners");
 
@@ -646,8 +627,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testMultipleEmit () {
-		var testService = new com.testService();
-
 
 		testService.on("multipleEmit1", function(){
 			writeoutput(arguments.__eventName);
@@ -674,8 +653,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testMultipleDispatch () {
-		var testService = new com.testService();
-
 
 		testService.on("multipleDispatch1", function(){
 			writeoutput(arguments.__eventName);
@@ -702,7 +679,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testDispatch () {
-		var testService = new com.testService();
 
 		var result = testService.dispatch("noListeners");
 
@@ -733,7 +709,6 @@ component extends="testbox.system.BaseSpec" {
 		//the scenario here is that you want to wire multiple services together to
 		//act on a struct of data.
 
-		var testService = new com.testService();
 		var formatterService = new com.formatterService();
 
 		testService.on("testCompose", formatterService.formatName);
@@ -748,9 +723,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testAsync () {
-
-		var testService = new com.testService();
-
 		var filename = dir & "/testAsync.txt";
 
 		testService.async(function () {
@@ -764,9 +736,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testOnAsync () {
-
-		var testService = new com.testService();
-
 		var filename = dir & "/testOnAsync.txt";
 
 		var x = randRange(0,1000);
@@ -790,8 +759,6 @@ component extends="testbox.system.BaseSpec" {
 	}
 
 	function testPipelineEventAsync () {
-
-		var testService = new com.testService();
 
 		var test = [];
 
