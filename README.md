@@ -8,7 +8,7 @@ in some ways from its api.  It also seeks to provide an easy way to create async
 
 > Note! this project is just getting started.  It has been mostly tested, but I am not claiming 100% coverage yet.  The API is not finalized and very well could change.  Consider it beta quality at this point.  Don't use it in production without testing it for yourself.  Pull requests or issues for code, documentation or tests welcome!
 
-I aim to support Railo 4+ first, and ACF 10+ secondarily.  You could probably back-port this project to tag based to as far as CF 8 - this is left as an exercise for the cursed.  I am not interested in tag based pull requests for this project.
+I aim to support Railo 4+ first, and ACF 10+ secondarily. ACF 10 is the first version with anonymous functions and closures that this project depends heavily on.  I am not interested in tag based pull requests for this project.
 
 ##Quick Start Guide:
 
@@ -58,7 +58,7 @@ timesToListen defaults to -1, which means it will listen until manually removed 
 
 You can also provide the eventName argument as an array of event names to listen on multiple events with the same handler.
 
-If you try to add an event listener which exceeds the limit, an exception of type Emit.Emit.maxListenersExceeded will be thrown. See setMaxListeners().  see also many().
+If you try to add an event listener which exceeds the limit, an exception of type Emit.maxListenersExceeded will be thrown. See setMaxListeners().  see also many().
 	
 __on (required string eventName, required any listener, boolean async = false)__
 
