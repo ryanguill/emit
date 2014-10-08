@@ -6,7 +6,7 @@ emit
 The primary goal of this project is to be similar to the event emitter in node.js, although this project might deviate
 in some ways from its api.  It also seeks to provide an easy way to create async code in CFML.  Any event listener can be created as async.
 
-> Note! this project is just getting started.  It has been mostly tested, but I am not claiming 100% coverage yet.  The API is not finalized and very well could change.  Consider it beta quality at this point.  Don't use it in production without testing it for yourself.  Pull requests or issues for code, documentation or tests welcome!
+> Note! this project is in its early days still.  It has been mostly tested though and I do not expect any more API changes. Consider it a release canidate at this point. Pull requests or issues for code, documentation or tests welcome!
 
 I aim to support Railo 4+ first, and ACF 10+ secondarily. ACF 10 is the first version with anonymous functions and closures that this project depends heavily on.  I am not interested in tag based pull requests for this project.
 
