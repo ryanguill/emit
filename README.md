@@ -3,16 +3,19 @@ emit
 
 #CFML Event Emitter
 
-The primary goal of this project is to be similar to the event emitter in node.js, although this project might deviate
+The primary goal of this project is to be similar to the eventemitter in node.js, although this project might deviate
 in some ways from its api.  It also seeks to provide an easy way to create async code in CFML.  Any event listener can be created as async.
 
-> Note! this project is in its early days still.  It has been mostly tested though and I do not expect any more API changes. Consider it a release canidate at this point. Pull requests or issues for code, documentation or tests welcome!
+> Note! This project is in its early days.  It has been mostly tested though and I do not expect any API changes. Consider it a release candidate at this point. Pull requests or issues for code, documentation or tests welcome!
 
-I aim to support Railo 4+ first, and ACF 10+ secondarily. ACF 10 is the first version with anonymous functions and closures that this project depends heavily on.  I am not interested in tag based pull requests for this project.
+I aim to support Railo 4+ first, and ACF 10+ secondarily. ACF 10 is the first version with anonymous functions and closures that this project depends heavily on.
+I am not interested in tag based pull requests for this project.
 
 ##Quick Start Guide:
 
-emit.cfc in the lib folder is all you need.  Put it anywhere you want.  Extend emit.cfc with any cfc you want.  There is no constructor so no need to call an init method.  Or, if you just need an application wide event manager, just instantiate emit.cfc directly.
+emit.cfc in the lib folder is all you need.  Put it anywhere you want.  Extend emit.cfc with any cfc you want.
+There is no constructor so no need to call an init method.
+Or, if you just need an application wide event manager, just instantiate emit.cfc directly.
 
 To emit an event from inside of your cfc
 
@@ -42,6 +45,12 @@ Note: Event names are case sensitive by default.  You can call setCaseSensitiveE
 
 Most functions return an instance of the object so that they can be chained.
 
+##What is this?
+
+This project has two primary goals: 1) To provide an implementation of the observer pattern for event driven programming in CFML and 2) To provide easier async capabilities.
+
+See [Use Cases](useCases.md) for more information.
+
 ##API:
 
 __addEventListener (required string eventName, required any listener, boolean async = false, numeric timesToListen = -1)__
@@ -52,7 +61,7 @@ Creates an event listener for a particular event emitted by the instance that yo
 - You will not be guaranteed that it will run at any particular time or order.
 - You will not be able to send data into the output buffer.  This makes debugging difficult - use logging or write out files.
 - You will have access to the data that you close over inside of your listener.  Make sure you have everything you need.
-- You cannot use positional arguments in listners.  Only depend on named arguments.  You can depend on named arguments that are not defined in the method definition though.
+- You cannot use positional arguments in listeners.  Only depend on named arguments.  You can depend on named arguments that are not defined in the method definition though.
 
 timesToListen defaults to -1, which means it will listen until manually removed - setting it to 1 will automatically remove the event listener the first time it is called.  Useful for fire once async handling.
 
@@ -74,9 +83,11 @@ Alternative to addEventListener, useful for quickly setting a certain number of 
 
 __removeListener (required string eventName, required any listener)__
 
-To remove a listener, you must pass in the exact listener you used to add the event listener initially.  Which means if you intend to remove a listener you need to create the listener in a separate variable and use it to both add and remove.
+To remove a listener, you must pass in the exact listener you used to add the event listener initially.
+Which means if you intend to remove a listener you need to create the listener in a separate variable and use it to both add and remove.
 
-You can also provide the eventName argument as an array of event names to remove the same handler from multiple events.  This is only useful if you used the exact same handler for multiple events.
+You can also provide the eventName argument as an array of event names to remove the same handler from multiple events.
+This is only useful if you used the exact same handler for multiple events.
 
 __off (required string eventName, required any listener)__
 
@@ -89,11 +100,14 @@ You can also provide the eventName argument as an array of event names to remove
 
 __listeners (required string eventName)__
 
-Gets an array of all of the listeners.  Each item in the array is a structure with the keys: listner (function), async (boolean), and once (boolean);
+Gets an array of all of the listeners.  Each item in the array is a structure with the keys: listener (function), async (boolean), and once (boolean);
 
 __emit (required string eventName, [optional arguments struct])__
 
-Fires an event of the given type.  Remember that events are case sensitive by default.  Event name is the only required argument, you can optionally pass a struct of arguments to be passed to the listener by name.  Remember that you cannot depend on positional arguments in listeners.  The special argument __eventName will always be passed to the listeners.  You can override this in the arguments struct if you know what you are doing.
+Fires an event of the given type.  Remember that events are case sensitive by default.
+Event name is the only required argument, you can optionally pass a struct of arguments to be passed to the listener by name.
+Remember that you cannot depend on positional arguments in listeners.  The special argument ```__eventName``` will always be passed to the listeners.
+You can override this in the arguments struct if you know what you are doing.
 You can also provide the eventName argument as an array of event names to fire multiple events with the same argument collection.
 
 __dispatch (required string eventName, [optional arguments struct])__
@@ -107,7 +121,7 @@ Convenience method.  Give it a function, it will run it in a separate thread.
 __pipeline ()__
 
 Sometimes you need to have multiple event listeners that need to run, but you need to make sure they run in succession.
-In the case of sync, listeners will be executed in the order they were attached.  But in the case of async, there are no guarantees of order, in fact all listeners may be executed at the same time.
+In the case of sync, listeners will be executed in the order they were attached.  But in the case of async there are no guarantees of order, in fact all listeners may be executed at the same time.
 
 In either scenario, use ```pipeline()``` to guarantee execution order.  Pipeline() will return an _object_ of sorts that has a few methods
 
@@ -128,7 +142,7 @@ Note: technically, the pipeline _object_ isn't an object, it is a struct full of
 
 __makeEmitter(required target)__
 
-There are situations where you want to use events in legacy applications, where you can't make an object extend emit, possibly because it is already extending something else.
+There are situations where you want to use events in legacy applications where you can't make an object extend emit, possibly because it is already extending something else.
 Because you can dispatch events for an object from outside of the object itself, you can use this method to make any object into an event emitter (as long as it does not have any existing method names that conflict).
 Pass in an instance of an object, and emit will inject everything necessary to make that object work as an event emitter, just as if you had extended emit directly.
 
