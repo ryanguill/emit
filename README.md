@@ -19,39 +19,30 @@ See [Use Cases](useCases.md) for more information.
 
 ##Quick Start Guide:
 
-emit.cfc in the lib folder is all you need.  Put it anywhere you want.  Extend emit.cfc with any cfc you want.
-There is no constructor so no need to call an init method.
-Or, if you just need an application wide event manager, just instantiate emit.cfc directly.
+emit.cfc in the lib folder is all you need.  Put it anywhere you want.  Create it as a singleton in your application (use your dependency injection framework of choice if you want).
+Or, if you want a separate event emitter for each service, extend emit.
 
-To emit an event from inside of your cfc
-
-    emit(eventname, [optional struct of data]);
-    
-or call emit from outside if you need to:
-
-    instance.emit(eventname, [optional struct of data]);
-    
-To listen for an event from inside of your cfc:
-
-    addEventListener(eventName, listener);
-	
-or more likely, from the outside:
-
-    instance.addEventListener(eventName, listener);
-
-Usually the listener will be an anonymous function (which might or might not be a closure):
+To listen for an event:
 
 ```
-instance.addEventListener("eventName", function(data) {
-    ...
+emit.on('myEventName', function(data){
+    //do something
 });
+
+//or
+
+emit.on('myEventName', service.method); //method expecting a struct as its first and only required argument
+```
+
+To dispatch an event:
+
+```
+emit.emit('myEventName', {optional struct of data});
 ```
 
 Note: Event names are case sensitive by default.  You can call setCaseSensitiveEventNames(false) to change this.
 
 Most functions return an instance of the object so that they can be chained.
-
-
 
 ##API:
 
