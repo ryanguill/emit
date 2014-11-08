@@ -109,20 +109,20 @@ __pipeline ()__
 Sometimes you need to have multiple event listeners that need to run, but you need to make sure they run in succession.
 In the case of sync, listeners will be executed in the order they were attached.  But in the case of async, there are no guarantees of order, in fact all listeners may be executed at the same time.
 
-In either scenario, use pipeline() to guarantee execution order.  Pipeline() will return an _object_ of sorts that has a few methods
+In either scenario, use ```pipeline()``` to guarantee execution order.  Pipeline() will return an _object_ of sorts that has a few methods
 
-add(function) will allow you to add a listener function, just like normal.  add() returns the pipeline object, allowing you to chain multiple add's together.
+```add(function)``` will allow you to add a listener function, just like normal.  ```add()``` returns the pipeline object, allowing you to chain multiple add's together.
 
-Once you have added all of your function handlers, call complete() to seal the pipeline.  This ensures that you have everything in the pipeline before execution.
+Once you have added all of your function handlers, call ```complete()``` to seal the pipeline.  This ensures that you have everything in the pipeline before execution.
 
-At this point, you can use the pipeline _object_ as a listener function itself in on(), such as .on('event', pipelineObject);
+At this point, you can use the pipeline _object_ as a listener function itself in ```on()```, such as ```.on('event', pipelineObject);```
 Then when the listener is executed, all of the methods in the pipeline will be executed in order.  Remember that the functions you add to the pipeline can be closures - they can modify state one after another.
 
-You can also call run() on a pipeline _object_ to execute it immediately, synchronously.  run() returns void.
+You can also call ```run()``` on a pipeline _object_ to execute it immediately, synchronously.  run() returns void.
 
-You can call isComplete() on a pipeline _object_.
+You can call ```isComplete()``` on a pipeline _object_.
 
-Using a pipeline in an async listener (e.g.: on('asyncEvent', pipeline, true)), the pipeline as a whole will be execute asynchronously, but the functions added to the pipeline will still be executed in order.
+Using a pipeline in an async listener (e.g.: ```on('asyncEvent', pipeline, true)```), the pipeline as a whole will be execute asynchronously, but the functions added to the pipeline will still be executed in order.
 
 Note: technically, the pipeline _object_ isn't an object, it is a struct full of methods.  This shouldn't affect how you work with the pipeline in any way.
 
