@@ -5,8 +5,8 @@ emit Use Cases
 
 The two primary things that emit provides is:
 
-1). An implementation of the observer pattern for event driven programming in CFML
-2). Easy implementation of asynchronous programming
+1. An implementation of the observer pattern for event driven programming in CFML
+2. Easy implementation of asynchronous programming
 
 In the following sections I will attempt to explain these in more detail and to give some concrete examples of where these things can be useful.
 
