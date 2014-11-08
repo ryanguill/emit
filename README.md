@@ -11,6 +11,12 @@ in some ways from its api.  It also seeks to provide an easy way to create async
 I aim to support Railo 4+ first, and ACF 10+ secondarily. ACF 10 is the first version with anonymous functions and closures that this project depends heavily on.
 I am not interested in tag based pull requests for this project.
 
+##What is this?
+
+This project has two primary goals: 1) To provide an implementation of the observer pattern for event driven programming in CFML and 2) To provide easier async capabilities.
+
+See [Use Cases](useCases.md) for more information.
+
 ##Quick Start Guide:
 
 emit.cfc in the lib folder is all you need.  Put it anywhere you want.  Extend emit.cfc with any cfc you want.
@@ -45,11 +51,7 @@ Note: Event names are case sensitive by default.  You can call setCaseSensitiveE
 
 Most functions return an instance of the object so that they can be chained.
 
-##What is this?
 
-This project has two primary goals: 1) To provide an implementation of the observer pattern for event driven programming in CFML and 2) To provide easier async capabilities.
-
-See [Use Cases](useCases.md) for more information.
 
 ##API:
 
