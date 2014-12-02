@@ -13,9 +13,16 @@ I am not interested in tag based pull requests for this project.
 
 ##What is this?
 
-This project has two primary goals: 1) To provide an implementation of the observer pattern for event driven programming in CFML and 2) To provide easier async capabilities.
+This project has two primary goals: 
+
+1. To provide an implementation of the observer pattern for event driven programming in CFML and 
+2. To provide easier async capabilities.
+ 
+You can think of it as a lightweight message queue or pub/sub framework.
 
 See [Use Cases](useCases.md) for more information.
+
+##[Use Cases](useCases.md)
 
 ##Quick Start Guide:
 
