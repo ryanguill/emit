@@ -53,7 +53,7 @@ Most functions return an instance of the object so that they can be chained.
 
 ##API:
 
-__addEventListener (required string eventName, required any listener, boolean async = false, numeric timesToListen = -1)__
+```addEventListener (required string eventName, required any listener, boolean async = false, numeric timesToListen = -1)```
 
 Creates an event listener for a particular event emitted by the instance that you are calling addEventListener on.  Event is case sensitive by default.  Listener can be any custom function.  Async defaults to false.  If you use async true, the listener will be executed in a separate thread.  Keep the following in mind:
 
