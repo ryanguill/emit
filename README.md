@@ -69,19 +69,19 @@ You can also provide the eventName argument as an array of event names to listen
 
 If you try to add an event listener which exceeds the limit, an exception of type Emit.maxListenersExceeded will be thrown. See setMaxListeners().  see also many().
 	
-__on (required string eventName, required any listener, boolean async = false)__
+```on (required string eventName, required any listener, boolean async = false)```
 
 Alias for addEventListener().
 
-__once (required string eventName, required any listener, boolean async = false)__
+```once (required string eventName, required any listener, boolean async = false)```
 
 Alias for addEventListener() with timesToListen = 1.
 
-__many (required string eventName, required any listener, required numeric timesToListen, boolean async = false)__
+```many (required string eventName, required any listener, required numeric timesToListen, boolean async = false)```
 
 Alternative to addEventListener, useful for quickly setting a certain number of times to fire a particular listener.
 
-__removeListener (required string eventName, required any listener)__
+```removeListener (required string eventName, required any listener)```
 
 To remove a listener, you must pass in the exact listener you used to add the event listener initially.
 Which means if you intend to remove a listener you need to create the listener in a separate variable and use it to both add and remove.
@@ -89,20 +89,20 @@ Which means if you intend to remove a listener you need to create the listener i
 You can also provide the eventName argument as an array of event names to remove the same handler from multiple events.
 This is only useful if you used the exact same handler for multiple events.
 
-__off (required string eventName, required any listener)__
+```off (required string eventName, required any listener)```
 
 Alias for removeListener();
 
-__removeAllListeners (required string eventName)__
+```removeAllListeners (required string eventName)```
 
 Removes all listeners for a given event.
 You can also provide the eventName argument as an array of event names to remove all listeners from multiple events.
 
-__listeners (required string eventName)__
+```listeners (required string eventName)```
 
 Gets an array of all of the listeners.  Each item in the array is a structure with the keys: listener (function), async (boolean), and once (boolean);
 
-__emit (required string eventName, [optional arguments struct])__
+```emit (required string eventName, [optional arguments struct])```
 
 Fires an event of the given type.  Remember that events are case sensitive by default.
 Event name is the only required argument, you can optionally pass a struct of arguments to be passed to the listener by name.
@@ -110,15 +110,15 @@ Remember that you cannot depend on positional arguments in listeners.  The speci
 You can override this in the arguments struct if you know what you are doing.
 You can also provide the eventName argument as an array of event names to fire multiple events with the same argument collection.
 
-__dispatch (required string eventName, [optional arguments struct])__
+```dispatch (required string eventName, [optional arguments struct])```
 
 Alias for emit().
 
-__async (required any f)__
+```async (required any f)```
 
 Convenience method.  Give it a function, it will run it in a separate thread.
 
-__pipeline ()__
+```pipeline ()```
 
 Sometimes you need to have multiple event listeners that need to run, but you need to make sure they run in succession.
 In the case of sync, listeners will be executed in the order they were attached.  But in the case of async there are no guarantees of order, in fact all listeners may be executed at the same time.
@@ -140,33 +140,33 @@ Using a pipeline in an async listener (e.g.: ```on('asyncEvent', pipeline, true)
 
 Note: technically, the pipeline _object_ isn't an object, it is a struct full of methods.  This shouldn't affect how you work with the pipeline in any way.
 
-__makeEmitter(required target)__
+```makeEmitter(required target)```
 
 There are situations where you want to use events in legacy applications where you can't make an object extend emit, possibly because it is already extending something else.
 Because you can dispatch events for an object from outside of the object itself, you can use this method to make any object into an event emitter (as long as it does not have any existing method names that conflict).
 Pass in an instance of an object, and emit will inject everything necessary to make that object work as an event emitter, just as if you had extended emit directly.
 
-__dispatchError ()__
+```dispatchError ()```
 
 Convenience function for dispatching an event on "error".  By default, any exceptions in the calling of the listener will redispatch to "error", with an added argument of *exception*.  If no listeners exist for the "error" event, the exception is thrown.  
 
 
 Other Methods:
 
-__getMaxListeners ()__
+```getMaxListeners ()```
 
 By default, there is a limit of 10 listeners on a given event.  This is to help identify memory leaks and to listeners that are not being removed properly.  This will not be appropriate for all applications.  use setMaxListeners() to set to an appropriate level for your needs.  If you try to add an event listener which exceeds the limit, an exception of type Emit.Emit.maxListenersExceeded will be thrown.
 
 
-__setMaxListeners (required numeric n)__
+```setMaxListeners (required numeric n)```
 
 Set the maximum listeners per event. You must do this per instance of emit (or subclass). See getMaxListeners().
 
-__isCaseSensitiveEventName ()__
+```isCaseSensitiveEventName ()```
 
 Be default, emit treats event names as case sensitive.  This method returns true by default.  use setCaseSensitiveEventName() to override.  You must do this per instance of emit (or subclass).
 
-__setCaseSensitiveEventName (required boolean value)__
+```setCaseSensitiveEventName (required boolean value)```
 
 see isCaseSensitiveEventName().
 
