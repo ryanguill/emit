@@ -164,7 +164,7 @@ Set the maximum listeners per event. You must do this per instance of emit (or s
 
 ```isCaseSensitiveEventName ()```
 
-Be default, emit treats event names as case sensitive.  This method returns true by default.  use setCaseSensitiveEventName() to override.  You must do this per instance of emit (or subclass).
+By default, emit treats event names as case sensitive.  This method returns true by default.  use setCaseSensitiveEventName() to override.  You must do this per instance of emit (or subclass).
 
 ```setCaseSensitiveEventName (required boolean value)```
 
