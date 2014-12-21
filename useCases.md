@@ -18,12 +18,11 @@ The first great part of event driven programming is that it provides an extensio
 
 The second benefit is that many listeners can be added to the same event without changing the source of the event.  So today you know that you need to do y when x happens.  Later on the requirements change and you need to do z as well.  Now instead of changing the source, you just add another event listener.
 
-So what about async?  We have had ways to do asynchronous programming in CFML for a while, but it is not very common.  In other languages though, async is a much more common way of handling activities.  The biggest thing to keep in mind with async programming is that you will not be able to get information out of the async code directly.  Async is good for tasks that you can fire and forget and you do not directly need the results in the current context.  Emit provides the ability to run this async code in a much easier and cleaner way.
+So what about async?  We have had ways to do asynchronous programming in CFML for a while, but it is not very common.  In other languages async is a much more common way of handling activities.  The biggest thing to keep in mind with async programming is that you will not be able to get information out of the async code directly.  Async is good for tasks that you can fire and forget and you do not directly need the results in the current context.  Emit provides the ability to run this async code in a much easier and cleaner way.
 
 > Note! treat these examples as psuedo-code.  They are not full examples you can execute, I wouldn't name things this way, I wouldn't organize things this way - these are just examples.
 
 #Use Cases
-
 
 ##Application-wide event system
 
@@ -33,7 +32,7 @@ Imagine you have a large system with lots of actions that happen.  Users registe
 
 So you break down all of these actions into events and you think about what kind of data goes with those events.  When a user registers, well you now have a userID, probably an email address, maybe some contact information.  When an order is created you know what is all contained in the order, who ordered it, how much the total was, etc.
 
-In this case what I would do is create a singleton instance of emit using your favorite dependency injection framework (such as di/1) or manually if thats the way you still do things - store it in the application scope.  Then inject that instance into all of your services and send events out as they happen - even if right now you don't have any extra activities to perform.
+In this case what I would do is create a singleton instance of emit using your favorite dependency injection framework (such as DI/1) or manually if thats the way you still do things - store it in the application scope.  Then inject that instance into all of your services and send events out as they happen - even if right now you don't have any extra activities to perform.
 
 So lets take the order example.  We have an orderService with a newOrder function that might look something like this:
 
@@ -52,7 +51,7 @@ component accessors=true {
 }
 ```
 
-So now, anytime an order is created that event will dispatch along with that information.  What information to include is up to you - if its not much information put it in the event - if there is a lot of information that could be included, provide the appropriate keys for the listeners to use to retrieve the information for themselves.
+So now, anytime an order is created that event will dispatch along with that information.  What information to include is up to you - if there is not much information put it in the event - if there is a lot of information that could be included, provide the appropriate keys for the listeners to use to retrieve the information for themselves.
 
 Now somewhere else in our application, we can register a listener that wants to know anytime that ```newOrder``` event is dispatched, because we want to send an order confirmation email.  So we can do something like this:
 
