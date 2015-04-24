@@ -354,6 +354,52 @@ component {
 		}
 	}
 
+	function future(required any f) {
+		var listener = f;
+		structDelete(arguments, "f");
+
+		var threadName = "future" & createUUID();
+
+		thread action="run" name=threadName listener=listener args=arguments emit=this {
+			thread.err = {};
+			try {
+				thread.result = listener(argumentCollection=arguments);
+			} catch (any e) {
+				thread.err = e;
+			}
+		}
+
+		var isComplete = false;
+		var hasError = false;
+		var result = "";
+		var error = {};
+
+		var o = {
+			isComplete = function () {
+				return isComplete;
+			},
+			hasError = function() {
+				return hasError;
+			},
+			get = function() {
+				if (!isComplete) {
+					thread action="join" name=threadName timeout="0";
+					var threadResult = cfthread[threadName];
+					if (!isNull(threadResult.err.code)) {
+						error = threadResult.err;
+						throw(threadResult.err);
+					} else {
+						result = threadResult.result;
+					}
+				}
+
+				return hasError ? error : result;
+			}
+		};
+
+		return o;
+	}
+
 	private boolean function _isPipeline (required any listener) {
 		return isStruct(listener) && structKeyExists(listener, "type") && listener.type == "PIPELINE";
 	}
