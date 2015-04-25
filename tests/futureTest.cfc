@@ -36,13 +36,16 @@ component extends="testbox.system.BaseSpec" {
 		var emit = new lib.emit();
 
 		var f = emit.future(function() {
+			//represents slow running process
+			//this function will run in its own thread,
+			//code in here will not block the execution of code outside
 			return 1;
 		});
 
 		assert(isStruct(f));
 		assert(!isNull(f.get) && isClosure(f.get));
 
-		var result = f.get();
+		var result = f.get(); //this blocks until the value is ready
 		assert(result == 1);
 
 		result = f.get();

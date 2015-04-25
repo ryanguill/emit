@@ -375,12 +375,8 @@ component {
 		var error = {};
 
 		var o = {
-			isComplete = function () {
-				return isComplete;
-			},
-			hasError = function() {
-				return hasError;
-			},
+			isComplete = function () { return isComplete; }, //todo: needs tests
+			hasError = function() { return hasError; }, //todo: needs tests
 			get = function() {
 				if (!isComplete) {
 					thread action="join" name=threadName timeout="0";
@@ -391,6 +387,8 @@ component {
 					} else {
 						result = threadResult.result;
 					}
+
+					isComplete = true;
 				}
 
 				return hasError ? error : result;
@@ -399,6 +397,85 @@ component {
 
 		return o;
 	}
+
+	function promise (required any f) {
+
+		var listener = f;
+		structDelete(arguments, "f");
+
+		var threadName = "promise" & createUUID();
+
+		thread action="run" name=threadName listener=listener emit=this {
+			thread.status = "PENDING";
+
+			var resolve = function (value) {
+				thread.status = "FULFILLED";
+				thread.result = value;
+			};
+			var reject = function (value) {
+				thread.status = "REJECTED";
+				thread.err = value;
+			};
+
+			try {
+				listener(resolve, reject);
+			} catch (any e) {
+				reject(e);
+			}
+		}
+
+		var isComplete = false;
+		var status = "PENDING"; //["PENDING","FULFILLED","REJECTED","SETTLED"]
+		var result = "";
+		var error = {};
+
+		var join = function () {
+			if (!isComplete) {
+				thread action="join" name=threadName timeout="0";
+				var threadResult = cfthread[threadName];
+				if (threadResult.status == "REJECTED") {
+					error = threadResult.err;
+					status = "REJECTED";
+				} else if (threadResult.status == "FULFILLED") {
+					result = threadResult.result;
+					status = "FULFILLED";
+				} else {
+					//todo: they didn't call resolve or reject - what do?
+				}
+
+				isComplete = true;
+			}
+		}
+
+		var o = {
+			getStatus: function () { return status; }, //todo: needs tests
+			isComplete: function () { return isComplete; }, //todo: needs tests
+			then: function (onFulfilled, onRejected) {
+				join();
+
+				if (status == "REJECTED") {
+					onRejected(error);
+				} else if (status == "FULFILLED") {
+					onFulfilled(result);
+				}
+
+				return o;
+			},
+			catch: function (onRejected) {
+				join();
+
+				if (status == "REJECTED") {
+					onRejected(error);
+				}
+
+				return o;
+			}
+		};
+
+		return o;
+
+	}
+
 
 	private boolean function _isPipeline (required any listener) {
 		return isStruct(listener) && structKeyExists(listener, "type") && listener.type == "PIPELINE";
