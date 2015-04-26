@@ -147,5 +147,56 @@ component extends="testbox.system.BaseSpec" {
 		assert(a.get() + b.get() == rand1 + rand2);
 	}
 
+	function testFutureIsComplete () {
+		var emit = new lib.emit();
+
+		var f = emit.future(function() {
+			sleep(50);
+			return true;
+		});
+
+		assert(f.isComplete() == false);
+
+		sleep(55);
+
+		assert(f.isComplete() == true); //isComplete can check the status of the result without blocking for it
+
+		assert(f.get() == true);
+
+		assert(f.isComplete() == true);
+	}
+
+	function testFutureHasError () {
+		var emit = new lib.emit();
+
+		var f = emit.future(function() {
+			sleep(50);
+			return true;
+		});
+
+		assert(f.hasError() == false); //not complete so no error yet
+
+		assert(f.get() == true);
+
+		assert(f.hasError() == false); //no error so hasError = false
+
+		f = emit.future(function() {
+			sleep(50);
+			throw(message="Intentional Error");
+		});
+
+		assert(f.hasError() == false); //not complete so no error yet
+
+		try {
+			f.get();
+		} catch (any e) {
+			assert(e.message == "Intentional Error");
+		}
+
+		assert(f.hasError() == true);
+	}
+
+
+
 
 }

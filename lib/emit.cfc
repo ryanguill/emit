@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Ryan Guill
+Copyright 2014-5 Ryan Guill
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -339,6 +339,7 @@ component {
 
 	/*
 		Convenience method. Give it a function, it will run it in a separate thread.
+		Only use for side effect methods that return void or you don't want the result from.
 	*/
 	function async (required any f) {
 		var listener = f;
@@ -354,6 +355,13 @@ component {
 		}
 	}
 
+	private boolean function _isFuture (required any value) {
+		return isStruct(value) && structKeyExists(value, "type") && value.type == "FUTURE";
+	}
+
+	/*
+		todo: future() documentation
+	*/
 	function future(required any f) {
 		var listener = f;
 		structDelete(arguments, "f");
@@ -369,26 +377,40 @@ component {
 			}
 		}
 
+		var hasJoined = false;
 		var isComplete = false;
 		var hasError = false;
 		var result = "";
 		var error = {};
 
 		var o = {
-			isComplete = function () { return isComplete; }, //todo: needs tests
-			hasError = function() { return hasError; }, //todo: needs tests
-			get = function() {
+			type: "FUTURE",
+			isComplete: function () {
 				if (!isComplete) {
-					thread action="join" name=threadName timeout="0";
+					isComplete = cfthread[threadName]["STATUS"] == "COMPLETED";
+				}
+				return isComplete;
+			},
+			hasError: function() { return hasError; },
+			get: function(numeric wait = 0) {
+				if (!hasJoined) {
+					thread action="join" name=threadName timeout=wait;
 					var threadResult = cfthread[threadName];
-					if (!isNull(threadResult.err.code)) {
-						error = threadResult.err;
-						throw(threadResult.err);
-					} else {
-						result = threadResult.result;
-					}
+					if (threadResult["STATUS"] == "COMPLETED") {
+						if (!isNull(threadResult.err.code)) {
+							hasError = true;
+							error = threadResult.err;
+							throw(threadResult.err);
+						} else {
+							result = threadResult.result;
+						}
 
-					isComplete = true;
+						isComplete = true;
+						hasJoined = true;
+					} else {
+						//we didnt wait long enough...
+						throw(type="TimeoutException", message="After waiting " & wait & "ms, the Future has still not completed. Try again later");
+					}
 				}
 
 				return hasError ? error : result;
@@ -398,6 +420,13 @@ component {
 		return o;
 	}
 
+	private boolean function _isPromise (required any value) {
+		return isStruct(value) && structKeyExists(value, "type") && value.type == "PROMISE";
+	}
+
+	/*
+		todo: promise() documentation
+	*/
 	function promise (required any f) {
 
 		var listener = f;
@@ -424,13 +453,14 @@ component {
 			}
 		}
 
+		var hasJoined = false;
 		var isComplete = false;
-		var status = "PENDING"; //["PENDING","FULFILLED","REJECTED","SETTLED"]
+		var status = "PENDING"; //["PENDING","FULFILLED","REJECTED"]
 		var result = "";
 		var error = {};
 
 		var join = function () {
-			if (!isComplete) {
+			if (!hasJoined) {
 				thread action="join" name=threadName timeout="0";
 				var threadResult = cfthread[threadName];
 				if (threadResult.status == "REJECTED") {
@@ -444,12 +474,19 @@ component {
 				}
 
 				isComplete = true;
+				hasJoined = true;
 			}
 		}
 
 		var o = {
+			type: "PROMISE",
 			getStatus: function () { return status; }, //todo: needs tests
-			isComplete: function () { return isComplete; }, //todo: needs tests
+			isComplete: function () { //todo: needs tests
+				if (!isComplete) {
+					isComplete = cfthread[threadName]["STATUS"] == "COMPLETED";
+				}
+				return isComplete;
+			},
 			then: function (onFulfilled, onRejected) {
 				join();
 
@@ -473,12 +510,121 @@ component {
 		};
 
 		return o;
+	}
 
+	/*
+		todo: all() documentation
+	*/
+	function all (required any collection) {
+
+		if (!isArray(collection) && !isStruct(collection)) {
+			throw(message="all(collection) // collection must be an array or a struct");
+		}
+
+		return promise(function (resolve, reject) {
+			var o = [];
+
+			if (isArray(collection)) {
+				for (var p in collection) {
+					if (_isPromise(p)) {
+						p.then(function (value) {
+							arrayAppend(o, value);
+						}, function (value) {
+							reject(value);
+						});
+					} else if (_isFuture(p)) {
+						try {
+							arrayAppend(o, p.get());
+						} catch (any e) {
+							reject(e);
+						}
+					} else {
+						arrayAppend(o, p);
+					}
+				}
+			} else { //must be struct
+				o = {};
+				for (var key in collection) {
+					if (_isPromise(collection[key])) {
+						collection[key].then(function (value) {
+							o[key] = value;
+						}, function (value) {
+							reject(value);
+						});
+					} else if (_isFuture(collection[key])) {
+						try {
+							o[key] = collection[key].get();
+						} catch (any e) {
+							reject(e);
+						}
+					} else {
+						o[key] = collection[key];
+					}
+				}
+			}
+
+			resolve(o);
+		});
+	}
+
+	/*
+		TODO: race() documentation
+	*/
+	function race (required any collection) {
+
+		if (!isArray(collection) && !isStruct(collection)) {
+			throw(message="race(collection) // collection must be an array or a struct");
+		}
+
+		return promise(function (resolve, reject) {
+			if (isArray(collection)) {
+				while (true) {
+					for (var p in collection) {
+						if (_isPromise(p) && p.isComplete()) {
+							p.then(function (value) {
+								return resolve(value);
+							}, function (value) {
+								return reject(value);
+							});
+						} else if (_isFuture(p) && p.isComplete()) {
+							try {
+								return resolve(p.get());
+							} catch (any e) {
+								return reject(e);
+							}
+						} else {
+							return resolve(p);
+						}
+					}
+				}
+
+			} else { //must be struct
+				while (true) {
+					for (var key in collection) {
+						if (_isPromise(collection[key]) && collection[key].isComplete()) {
+							collection[key].then(function (value) {
+								return resolve(value);
+							}, function (value) {
+								return reject(value);
+							});
+						} else if (_isFuture(collection[key]) && collection[key].isComplete()) {
+							try {
+								return resolve(collection[key].get());
+							} catch (any e) {
+								return reject(e);
+							}
+						} else {
+							return resolve(collection[key]);
+						}
+					}
+				}
+			}
+		});
 	}
 
 
-	private boolean function _isPipeline (required any listener) {
-		return isStruct(listener) && structKeyExists(listener, "type") && listener.type == "PIPELINE";
+	private boolean function _isPipeline (required any value) {
+		return isStruct(value) && structKeyExists(value, "type") && value.type == "PIPELINE";
 	}
 
 	/*
@@ -610,7 +756,7 @@ component {
 
 		for (f in getMetadata(target).functions) {
 			if (arrayFindNoCase(functionsToAdd, f.name)) {
-				throw(message="Error making target an event Emitter, target already defines method: " & f.name);
+				throw(message="Error making target an event emitter, target already defines method: " & f.name);
 			}
 		}
 
