@@ -69,7 +69,7 @@ component extends="testbox.system.BaseSpec" {
 
 		var p = emit.Promise(function(resolve, reject) {
 			reject(x);
-		})
+		});
 
 		p.then(
 			function(value) {
@@ -127,8 +127,53 @@ component extends="testbox.system.BaseSpec" {
 		var service = beanFactory.getBean("promiseService");
 
 		service.times10(x)
-			.then(service.dividedBy10)
+			.then(service, "dividedBy10")
 			.then(function(value) { assert(value == x);});
+
+	}
+
+
+	function testPromiseStatus () {
+		var emit = new lib.emit();
+
+		var x = randRange(1, 100);
+
+		var p = emit.Promise(function(resolve, reject) {
+			resolve(x);
+		});
+
+		assert(p.getStatus() == "PENDING");
+
+		p.then(
+			function(value) {
+				assert(value == x);
+			}
+		);
+
+		assert(p.getStatus() == "FULFILLED");
+
+		assert(p.then().getStatus() == "FULFILLED");
+
+		p = emit.Promise(function(resolve, reject) {
+			reject(x);
+		});
+
+		assert(p.getStatus() == "PENDING");
+
+		assert(p.then(
+			function(value) {
+				throw(message="Should not be called");
+			}
+		).getStatus() == "REJECTED");
+
+
+		p.catch(
+			function(value) {
+				assert(value == x);
+			}
+		);
+
+		assert(p.getStatus() == "REJECTED");
 
 	}
 
@@ -139,12 +184,11 @@ component extends="testbox.system.BaseSpec" {
 		var service = beanFactory.getBean("promiseService");
 
 		service.times10(x)
-			.then(service.slowErrorProcess)
+			.then(service, "slowErrorProcess")
 			.then(function(value) { throw(message="Should Not Be Called");})
 			.catch(function(value) { assert(value == x * 10);});
 
 	}
-
 
 
 

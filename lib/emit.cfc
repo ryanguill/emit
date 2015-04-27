@@ -56,10 +56,10 @@ component {
 	}
 
 	/*
-		By default, there is a limit of 10 listeners on a given event. This is to help identify memory leaks and to
+		By default, there is a limit of 10 listeners on a given event. This is to help identify memory leaks and
 		listeners that are not being removed properly. This will not be appropriate for all applications.
 		use setMaxListeners() to set to an appropriate level for your needs. If you try to add an event listener
-		which exceeds the limit, an exception of type Emit.Emit.maxListenersExceeded will be thrown.
+		which exceeds the limit, an exception of type Emit.maxListenersExceeded will be thrown.
 	*/
 	function getMaxListeners () {
 		_ensurePrivateVariables();
@@ -267,7 +267,7 @@ component {
 		you know what you are doing. You can also provide the eventName argument as an array of event names to fire
 		multiple events with the same argument collection.
 	*/
-	function emit (required any eventName, struct args = {}) {
+	function emitx (required any eventName, struct args = {}) {
 		_ensurePrivateVariables();
 
 		if (isArray(eventName)) {
@@ -339,7 +339,8 @@ component {
 
 	/*
 		Convenience method. Give it a function, it will run it in a separate thread.
-		Only use for side effect methods that return void or you don't want the result from.
+		Only use for side effect methods that return void or that you don't want the result from.
+		See also future() and promise().
 	*/
 	function async (required any f) {
 		var listener = f;
@@ -362,6 +363,7 @@ component {
 	/*
 		todo: future() documentation
 	*/
+	//todo: allow future to take a second argument for lazy evaluation
 	function future(required any f) {
 		var listener = f;
 		structDelete(arguments, "f");
@@ -435,15 +437,17 @@ component {
 		var threadName = "promise" & createUUID();
 
 		thread action="run" name=threadName listener=listener emit=this {
-			thread.status = "PENDING";
+			thread.promiseStatus = "PENDING";
 
 			var resolve = function (value) {
-				thread.status = "FULFILLED";
+				thread.promiseStatus = "FULFILLED";
 				thread.result = value;
 			};
 			var reject = function (value) {
-				thread.status = "REJECTED";
+				thread.promiseStatus = "REJECTED";
 				thread.err = value;
+				dump(thread);
+				dump(value);abort;
 			};
 
 			try {
@@ -463,10 +467,10 @@ component {
 			if (!hasJoined) {
 				thread action="join" name=threadName timeout="0";
 				var threadResult = cfthread[threadName];
-				if (threadResult.status == "REJECTED") {
+				if (threadResult.promiseStatus == "REJECTED") {
 					error = threadResult.err;
 					status = "REJECTED";
-				} else if (threadResult.status == "FULFILLED") {
+				} else if (threadResult.promiseStatus == "FULFILLED") {
 					result = threadResult.result;
 					status = "FULFILLED";
 				} else {
@@ -476,7 +480,7 @@ component {
 				isComplete = true;
 				hasJoined = true;
 			}
-		}
+		};
 
 		var o = {
 			type: "PROMISE",
@@ -487,23 +491,89 @@ component {
 				}
 				return isComplete;
 			},
-			then: function (onFulfilled, onRejected) {
+			then: function (any a, any b) {
 				join();
 
-				if (status == "REJECTED") {
-					onRejected(error);
-				} else if (status == "FULFILLED") {
-					onFulfilled(result);
+				var tempResult = javacast("null", 0);
+
+				if (isNull(a)) {
+					//no args, do nothing
+				} else if (isNull(b)) {
+					//a = closure
+					if (_canBeCalledAsFunction(a)) {
+						if (status == "FULFILLED") {
+							tempResult = a(result);
+							if (isNull(tempResult)) {
+								//do nothing
+							} else if (_isPromise(tempResult)) {
+								tempResult.then(function(value) {
+									result = value;
+								})
+								.catch(function(value) {
+									error = value;
+									//not sure im doing the right thing here...
+									status = "REJECTED";
+								});
+							} else {
+								result = tempResult;
+							}
+						}
+					} else {
+						throw(message="If passing a single argument to then, it must be a closure.");
+					}
+				} else {
+					//a = object, b = string
+					if (isObject(a) && isSimpleValue(b) && structKeyExists(a, b)) {
+						if (status == "FULFILLED") {
+							tempResult = a[b](result);
+							if (isNull(tempResult)) {
+								//do nothing
+							} else if (_isPromise(tempResult)) {
+								tempResult.then(function(value) {
+									result = value;
+								})
+								.catch(function(value) {
+									error = value;
+									//not sure im doing the right thing here...
+									status = "REJECTED";
+								});
+							} else {
+								result = tempResult;
+							}
+						}
+					} else {
+						throw(message="If passing two arguments to then, it must be an object and a string of the method name to call on the object");
+					}
 				}
 
 				return o;
 			},
-			catch: function (onRejected) {
+			catch: function (any a, any b) {
 				join();
 
-				if (status == "REJECTED") {
-					onRejected(error);
+				if (isNull(a)) {
+					//no args, do nothing
+				} else if (isNull(b)) {
+					//a = closure
+					if (_canBeCalledAsFunction(a)) {
+						if (status == "REJECTED") {
+							a(error);
+						}
+					} else {
+						throw(message="If passing a single argument to catch, it must be a closure.");
+					}
+				} else {
+					//a = object, b = string
+					if (isObject(a) && isSimpleValue(b) && structKeyExists(a, b)) {
+						if (status == "REJECTED") {
+							a[b](error);
+						}
+					} else {
+						throw(message="If passing two arguments to catch, it must be an object and a string of the method name to call on the object");
+					}
 				}
+
+
 
 				return o;
 			}
@@ -708,6 +778,10 @@ component {
 		} else {
 			throw(type="Emit.unknownException", message="Unhandled Exception");
 		}
+	}
+
+	private function _canBeCalledAsFunction(required any f) {
+		return isCustomFunction(f) || isClosure(f);
 	}
 
 	private function __inject (required string name, required any f, required boolean isPublic) {
