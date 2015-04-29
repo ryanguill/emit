@@ -267,7 +267,7 @@ component {
 		you know what you are doing. You can also provide the eventName argument as an array of event names to fire
 		multiple events with the same argument collection.
 	*/
-	function emitx (required any eventName, struct args = {}) {
+	function emit (required any eventName, struct args = {}) {
 		_ensurePrivateVariables();
 
 		if (isArray(eventName)) {
@@ -446,8 +446,6 @@ component {
 			var reject = function (value) {
 				thread.promiseStatus = "REJECTED";
 				thread.err = value;
-				dump(thread);
-				dump(value);abort;
 			};
 
 			try {
@@ -484,8 +482,8 @@ component {
 
 		var o = {
 			type: "PROMISE",
-			getStatus: function () { return status; }, //todo: needs tests
-			isComplete: function () { //todo: needs tests
+			getStatus: function () { return status; },
+			isComplete: function () {
 				if (!isComplete) {
 					isComplete = cfthread[threadName]["STATUS"] == "COMPLETED";
 				}
@@ -506,14 +504,8 @@ component {
 							if (isNull(tempResult)) {
 								//do nothing
 							} else if (_isPromise(tempResult)) {
-								tempResult.then(function(value) {
-									result = value;
-								})
-								.catch(function(value) {
-									error = value;
-									//not sure im doing the right thing here...
-									status = "REJECTED";
-								});
+								o = tempResult;
+
 							} else {
 								result = tempResult;
 							}
@@ -525,18 +517,13 @@ component {
 					//a = object, b = string
 					if (isObject(a) && isSimpleValue(b) && structKeyExists(a, b)) {
 						if (status == "FULFILLED") {
-							tempResult = a[b](result);
+							a.__emit_method_ref = a[b];
+							tempResult = a.__emit_method_ref(result);
+							structDelete(a, "__emit_method_ref");
 							if (isNull(tempResult)) {
 								//do nothing
 							} else if (_isPromise(tempResult)) {
-								tempResult.then(function(value) {
-									result = value;
-								})
-								.catch(function(value) {
-									error = value;
-									//not sure im doing the right thing here...
-									status = "REJECTED";
-								});
+								o = tempResult;
 							} else {
 								result = tempResult;
 							}
@@ -545,10 +532,9 @@ component {
 						throw(message="If passing two arguments to then, it must be an object and a string of the method name to call on the object");
 					}
 				}
-
 				return o;
 			},
-			catch: function (any a, any b) {
+			"catch": function (any a, any b) {
 				join();
 
 				if (isNull(a)) {
@@ -560,30 +546,40 @@ component {
 							a(error);
 						}
 					} else {
-						throw(message="If passing a single argument to catch, it must be a closure.");
+						throw(message="If passing a single argument to catch/fail, it must be a closure.");
 					}
 				} else {
 					//a = object, b = string
 					if (isObject(a) && isSimpleValue(b) && structKeyExists(a, b)) {
 						if (status == "REJECTED") {
-							a[b](error);
+							a.__emit_method_ref = a[b];
+							a.__emit_method_ref(error);
+							structDelete(a, "__emit_method_ref");
 						}
 					} else {
-						throw(message="If passing two arguments to catch, it must be an object and a string of the method name to call on the object");
+						throw(message="If passing two arguments to catch/fail, it must be an object and a string of the method name to call on the object");
 					}
 				}
-
-
-
 				return o;
 			}
 		};
+
+		//aliases for ACF
+		o.fail = o.catch;
+		o.trap = o.catch;
 
 		return o;
 	}
 
 	/*
+		todo: consider a name change?
 		todo: all() documentation
+		todo: test all
+		todo: test all([futures])
+		todo: test all([promises])
+		todo: test failure modes
+		todo: moar tests
+
 	*/
 	function all (required any collection) {
 
@@ -615,20 +611,21 @@ component {
 			} else { //must be struct
 				o = {};
 				for (var key in collection) {
-					if (_isPromise(collection[key])) {
-						collection[key].then(function (value) {
+					var p = collection[key];
+					if (_isPromise(p)) {
+						p.then(function (value) {
 							o[key] = value;
 						}, function (value) {
 							reject(value);
 						});
-					} else if (_isFuture(collection[key])) {
+					} else if (_isFuture(p)) {
 						try {
-							o[key] = collection[key].get();
+							o[key] = p.get();
 						} catch (any e) {
 							reject(e);
 						}
 					} else {
-						o[key] = collection[key];
+						o[key] = p;
 					}
 				}
 			}
@@ -639,6 +636,9 @@ component {
 
 	/*
 		TODO: race() documentation
+		todo: test promises
+		todo: test futures in struct
+		todo: moar tests
 	*/
 	function race (required any collection) {
 
@@ -650,17 +650,21 @@ component {
 			if (isArray(collection)) {
 				while (true) {
 					for (var p in collection) {
-						if (_isPromise(p) && p.isComplete()) {
-							p.then(function (value) {
-								return resolve(value);
-							}, function (value) {
-								return reject(value);
-							});
-						} else if (_isFuture(p) && p.isComplete()) {
-							try {
-								return resolve(p.get());
-							} catch (any e) {
-								return reject(e);
+						if (_isPromise(p)) {
+							if (p.isComplete()) {
+								p.then(function (value) {
+									return resolve(value);
+								}, function (value) {
+									return reject(value);
+								});
+							}
+						} else if (_isFuture(p)) {
+							if (p.isComplete()) {
+								try {
+									return resolve(p.get());
+								} catch (any e) {
+									return reject(e);
+								}
 							}
 						} else {
 							return resolve(p);
@@ -671,20 +675,25 @@ component {
 			} else { //must be struct
 				while (true) {
 					for (var key in collection) {
-						if (_isPromise(collection[key]) && collection[key].isComplete()) {
-							collection[key].then(function (value) {
-								return resolve(value);
-							}, function (value) {
-								return reject(value);
-							});
-						} else if (_isFuture(collection[key]) && collection[key].isComplete()) {
-							try {
-								return resolve(collection[key].get());
-							} catch (any e) {
-								return reject(e);
+						var p = collection[key];
+						if (_isPromise(p)) {
+							if (p.isComplete()) {
+								p.then(function (value) {
+									return resolve(value);
+								}, function (value) {
+									return reject(value);
+								});
+							}
+						} else if (_isFuture(p)) {
+							if (p.isComplete()) {
+								try {
+									return resolve(p.get());
+								} catch (any e) {
+									return reject(e);
+								}
 							}
 						} else {
-							return resolve(collection[key]);
+							return resolve(p);
 						}
 					}
 				}

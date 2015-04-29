@@ -77,7 +77,7 @@ component extends="testbox.system.BaseSpec" {
 			}
 		);
 
-		p.catch(
+		p.fail(
 			function(value) {
 				assert(value == x);
 			}
@@ -96,7 +96,7 @@ component extends="testbox.system.BaseSpec" {
 			function(value) {
 				throw(message="Should not be called");
 			}
-		).catch(
+		).fail(
 			function(value) {
 				assert(value == x);
 			}
@@ -132,7 +132,6 @@ component extends="testbox.system.BaseSpec" {
 
 	}
 
-
 	function testPromiseStatus () {
 		var emit = new lib.emit();
 
@@ -167,13 +166,57 @@ component extends="testbox.system.BaseSpec" {
 		).getStatus() == "REJECTED");
 
 
-		p.catch(
+		p.fail(
 			function(value) {
 				assert(value == x);
 			}
 		);
 
 		assert(p.getStatus() == "REJECTED");
+
+	}
+
+	function testPromiseIsComplete () {
+		var emit = new lib.emit();
+
+		var x = randRange(1, 100);
+
+		var p = emit.Promise(function(resolve, reject) {
+			resolve(x);
+		});
+
+		assert(p.isComplete() == false);
+
+		p.then(
+			function(value) {
+				assert(value == x);
+			}
+		);
+
+		assert(p.isComplete() == true);
+
+		assert(p.isComplete() == true);
+
+		p = emit.Promise(function(resolve, reject) {
+			reject(x);
+		});
+
+		assert(p.isComplete() == false);
+
+		assert(p.then(
+			function(value) {
+				throw(message="Should not be called");
+			}
+		).isComplete() == true);
+
+
+		p.fail(
+			function(value) {
+				assert(value == x);
+			}
+		);
+
+		assert(p.isComplete() == true);
 
 	}
 
@@ -186,7 +229,29 @@ component extends="testbox.system.BaseSpec" {
 		service.times10(x)
 			.then(service, "slowErrorProcess")
 			.then(function(value) { throw(message="Should Not Be Called");})
-			.catch(function(value) { assert(value == x * 10);});
+			.fail(function(value) { assert(value == x * 10);});
+
+	}
+
+	function testPromiseRace () {
+		var emit = new lib.emit();
+
+		var ps = [];
+
+		for (var i = 1; i <= 10; i++) {
+			arrayAppend(ps, emit.Promise(function(resolve, reject) {
+				sleep(i * 10);
+				resolve(i);
+			}));
+		}
+
+		var racep = emit.race(ps);
+
+		racep.then(function(value) {
+			writedump(value);abort;
+			assert(value == 1);
+		});
+
 
 	}
 

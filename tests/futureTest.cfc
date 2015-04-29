@@ -190,13 +190,88 @@ component extends="testbox.system.BaseSpec" {
 		try {
 			f.get();
 		} catch (any e) {
-			assert(e.message == "Intentional Error");
+			assert(findNoCase("Intentional Error", e.message));
 		}
 
 		assert(f.hasError() == true);
 	}
 
+	function testFutureRaceSimple () {
+		var emit = new lib.emit();
 
+		var ps = [];
+
+		for (var i = 1; i <= 10; i++) {
+			var makeFuture = function(index) {
+				return emit.future(function() {
+					sleep(index * 100);
+					return index;
+				});
+			};
+			arrayAppend(ps, makeFuture(i));
+		}
+
+		var racep = emit.race(ps);
+
+		racep.then(function(value) {
+			assert(value == 1);
+		});
+	}
+
+	function testFutureRaceNonFuture () {
+		var emit = new lib.emit();
+
+		var ps = [];
+
+		for (var i = 1; i <= 10; i++) {
+			var makeFuture = function(index) {
+
+				if (index == 5) {
+					return 5;
+				}
+				return emit.future(function() {
+					sleep(index * 100);
+					return index;
+				});
+			};
+			arrayAppend(ps, makeFuture(i));
+		}
+
+		var racep = emit.race(ps);
+
+		racep.then(function(value) {
+			assert(value == 5);
+		});
+	}
+
+	function testFutureRaceFailure () {
+		var emit = new lib.emit();
+
+		var ps = [];
+
+		for (var i = 5; i <= 5; i++) {
+			var makeFuture = function(index) {
+
+				return emit.future(function() {
+					if (index == 5) {
+						throw(message="Intentional Error " & index);
+					}
+					sleep(index * 100);
+					return index;
+				});
+			};
+			arrayAppend(ps, makeFuture(i));
+		}
+
+		var racep = emit.race(ps);
+
+		racep.then(function(value) {
+			//writedump(value);abort;
+			throw(message="should not be called");
+		}).fail(function(error) {
+			assert(findNoCase("Intentional Error 5", error.message) != 0);
+		});
+	}
 
 
 }
