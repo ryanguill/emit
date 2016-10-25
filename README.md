@@ -47,7 +47,7 @@ To dispatch an event:
 emit.emit('myEventName', {optional struct of data});
 ```
 
-Note: Event names are case sensitive by default.  You can call setCaseSensitiveEventNames(false) to change this.
+Note: Event names are case sensitive by default.  You can call `setCaseSensitiveEventName(false)` to change this.
 
 Most functions return an instance of the object so that they can be chained.
 
