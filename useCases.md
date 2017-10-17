@@ -1,7 +1,7 @@
 emit Use Cases
 ==============
 
-##Project Goals
+## Project Goals
 
 The two primary things that emit provides is:
 
@@ -10,7 +10,7 @@ The two primary things that emit provides is:
 
 In the following sections I will attempt to explain these in more detail and to give some concrete examples of where these things can be useful.
 
-##Concepts
+## Concepts
 
 If you have ever programmed in javascript or actionscript, you have likely done some event driven programming.  It is much more common in these languages, because it is a very useful concept for dealing with UI based events.  Any time you have use jquery's ```on()``` or just straight ```addEventListener``` you were doing event driven programming.  At its core, the idea is that something will broadcast out an event (and optionally associated data) and if anything else cares to know when that event occurs, they can register their interest and provide actions to perform in that case.  I want to click a button, and I want this to happen.
 
@@ -22,9 +22,9 @@ So what about async?  We have had ways to do asynchronous programming in CFML fo
 
 > Note! treat these examples as psuedo-code.  They are not full examples you can execute, I wouldn't name things this way, I wouldn't organize things this way - these are just examples.
 
-#Use Cases
+# Use Cases
 
-##Application-wide event system
+## Application-wide event system
 
 This example is more publish/subscribe than observer.
 
@@ -75,7 +75,7 @@ emit.on('newOrder', function(data){
 
 Now if you have been paying attention you might notice that boolean true as the third argument to ```on()```.  This tells emit to execute these listeners asynchronously.  This means that no code is waiting on these listeners to complete - they will execute in their own thread and the newOrder() function will finish as fast as if there were no listeners at all.  But this isn't a requirement - you could execute these listeners synchronously if you would rather - and there are some benefits to doing it that way - allowing listeners to modify state for instance.  For more information see the next example.
 
-##Allowing external code to modify state / composing services
+## Allowing external code to modify state / composing services
 
 Lets take our newOrder example again but lets say that we just expanded to some new markets that require us to charge some taxes and maybe some extra fees.  We could add code directly into newOrder to determine these taxes and fees and add them - or we could use synchronous events to allow us to hook in that logic and modify the state of our function for us.  Lets look at an example:
 
@@ -142,7 +142,7 @@ Which would work the same as the above example.
 
 In any case - it is up to the person designing the source of the event to document that it a) broadcasts an event named ```newOrder.determineTaxes``` and what data is provided.
 
-###Where to put the listeners?
+### Where to put the listeners?
 
 So the easy, non-helpful answer is - anywhere you want.  The only requirement from emit's perspective is that the listener must be created before the event is fired.  In practice, from a code organization perspective though, it does matter.  Here are some possibilities:
 
@@ -186,7 +186,7 @@ function createOrder() {
 }
 ```
 
-##Async Action
+## Async Action
 
 Have you ever written code to create a scheduled task that runs some code once and then removes itself?  Maybe it is some long running activity like generating a report or exporting some data.  All you are really trying to do is not make the user wait - it is either going to take a lot of time or might require some resource that isn't yet available.  Emit can make this much easier.
 
