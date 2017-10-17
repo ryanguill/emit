@@ -1,5 +1,6 @@
 emit
 ====
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/ryanguill/emit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # CFML Event Emitter
 
