@@ -25,7 +25,7 @@ component {
 	private function _ensurePrivateVariables () {
 		if (!structKeyExists(variables, "_emit")) {
 			variables._emit = {};
-			_emit.listeners = createObject("java", "java.util.LinkedHashMap").init();
+			_emit.listeners = structNew("linked");
 			_emit.maxListeners = 10;
 			_emit.caseSensitiveEventName = true;
 		}
@@ -282,11 +282,15 @@ component {
 
 		param name="args.__eventName" default=arguments.eventName;
 
-		if (!structKeyExists(_emit.listeners, eventName)) {
-			return false;
-		}
+		var listeners = [];
 
-		var listeners = _emit.listeners[eventName];
+		_emit.listeners.filter(function(key) {
+							return eventName.matches(key.replace("*", ".*"))
+						}).each(function(key, value) {
+							listeners.append(value, true)
+						});
+
+
 
 		if (!arrayLen(listeners)) {
 			return false;
